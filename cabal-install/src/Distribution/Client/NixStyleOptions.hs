@@ -31,6 +31,7 @@ data NixStyleFlags a = NixStyleFlags
     , projectFlags   :: ProjectFlags
     , extraFlags     :: a
     }
+    deriving (Show)------------
 
 nixStyleOptions
     :: (ShowOrParseArgs -> [OptionField a])

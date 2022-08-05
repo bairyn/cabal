@@ -140,6 +140,8 @@ import System.Directory
          , removeFile, removeDirectory, copyFile )
 import System.FilePath
          ( (</>), (<.>), takeDirectory, takeBaseName )
+import Debug.Trace-----------------------------------------------------
+import Distribution.Client.InstallPlan (showInstallPlan)
 
 installCommand :: CommandUI (NixStyleFlags ClientInstallFlags)
 installCommand = CommandUI
@@ -191,6 +193,7 @@ installCommand = CommandUI
 --
 installAction :: NixStyleFlags ClientInstallFlags -> [String] -> GlobalFlags -> IO ()
 installAction flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targetStrings globalFlags = do
+  traceIO $ ("DEBUG54: installAction: flags is : ‘" ++ (show $ (flags)) ++ "’.")
   -- Ensure there were no invalid configuration options specified.
   verifyPreconditionsOrDie verbosity configFlags'
 
@@ -209,8 +212,13 @@ installAction flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targe
       let reducedVerbosity = lessVerbose verbosity
 
       -- First, we need to learn about what's available to be installed.
+      traceIO $ ("DEBUG56: installAction: cliConfig is : ‘" ++ (show $ (cliConfig)) ++ "’.")  -- Okay, looks good.
       localBaseCtx <-
         establishProjectBaseContext reducedVerbosity cliConfig InstallCommand
+      traceIO $ ("DEBUG57: installAction: projectConfig localBaseCtx is : ‘" ++ (show $ (projectConfig localBaseCtx)) ++ "’.")  -- ... Huh?  Why is it *not* relevantly different here?  (Well, looks like we've narrowed it down, anyway!  Let's check out establishProjectBaseContext.)
+      -- okay, I just actually had to clean better: after removing
+      -- cabal.project.local appropriately, now DEBUG57 is valid, but ... now
+      -- the hash is still the same.
       let localDistDirLayout = distDirLayout localBaseCtx
       pkgDb <- projectConfigWithBuilderRepoContext reducedVerbosity
                (buildSettings localBaseCtx) (getSourcePackages verbosity)
@@ -242,8 +250,12 @@ installAction flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targe
                                     Nothing targetStrings''
 
           (specs, selectors) <-
-            getSpecsAndTargetSelectors
+            getSpecsAndTargetSelectors  -- (withInstall -- first of second message pairs)
               verbosity reducedVerbosity pkgDb targetSelectors localDistDirLayout localBaseCtx targetFilter
+          Debug.Trace.traceIO $ "DEBUG67: (specs, selectors, packageSpecifiers, packageTargets) etc. is ‘" ++ (show $ (specs, selectors, packageSpecifiers ++ (take 0 specs), packageTargets ++ (take 0 selectors))) ++ "’."
+          -- ^^^^^^^^^^ Okay, yep, this has ‘srcpkgSource = LocalTarballPackage "/home/bairyn/tmp/cabal-test-static-dynamic/dist-newstyle/sdist/cabal-test-static-dynamic-0.1.0.0.tar.gz"’.
+          -- Thus for ‘cabal install’ the static / dynamic flags will be
+          -- ignored, because then they are not seen as local.
 
           return ( specs ++ packageSpecifiers
                  , []
@@ -298,6 +310,7 @@ installAction flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targe
 
   (specs, uris, targetSelectors, config) <-
      withProjectOrGlobalConfig verbosity ignoreProject globalConfigFlag withProject withoutProject
+  traceIO $ ("DEBUG55: cmd install: config is : ‘" ++ (show $ (config)) ++ "’.")  -- Huh?  How come (DEBUG54) the ‘flags’ looks different as it should for dynamic (3-flag Arch build style) vs static (0 flags) lib for install, but our ‘config’ here (DEBUG55) shows the same config?  I think we narrowed dow at least *one* bug a bit.  Let's dig deeper.
 
   let
     ProjectConfig {
@@ -362,6 +375,7 @@ installAction flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targe
       (projectConfigShared config)
       (projectConfigBuildOnly config)
       [ ProjectPackageRemoteTarball uri | uri <- uris ]
+    traceIO $ "DEBUG36: uriSpecs is ‘" ++ (show $ (uriSpecs)) ++ "’."
 
     baseCtx <- establishDummyProjectBaseContext
                  verbosity
@@ -369,13 +383,19 @@ installAction flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targe
                  distDirLayout
                  (envSpecs ++ specs ++ uriSpecs)
                  InstallCommand
+    traceIO $ "DEBUG37: projectConfig baseCtx is ‘" ++ (show $ (projectConfig baseCtx)) ++ "’."
 
-    buildCtx <- constructProjectBuildContext verbosity baseCtx targetSelectors
+    buildCtx <- constructProjectBuildContext verbosity baseCtx targetSelectors  -- THIS is where hash seems to be generated!!
+    traceIO $ "DEBUG38: elaboratedPlanOriginal buildCtx is ‘" ++ (show $ (showInstallPlan $ elaboratedPlanOriginal buildCtx)) ++ "’."
+    traceIO $ "DEBUG38.5: elaboratedPlanToExecute buildCtx is ‘" ++ (show $ (showInstallPlan $ elaboratedPlanToExecute buildCtx)) ++ "’."
 
     printPlan verbosity baseCtx buildCtx
+    traceIO $ "DEBUG39: printed plan."
 
     buildOutcomes <- runProjectBuildPhase verbosity baseCtx buildCtx
+    traceIO $ "DEBUG40: ran build phase (but not post build phase quite yet) ‘" ++ (show $ (buildOutcomes)) ++ "’."
     runProjectPostBuildPhase verbosity baseCtx buildCtx buildOutcomes
+    traceIO $ "DEBUG41: ran post build phase."
 
     -- Now that we built everything we can do the installation part.
     -- First, figure out if / what parts we want to install:
@@ -433,6 +453,7 @@ getSpecsAndTargetSelectors
   -> IO ([PackageSpecifier UnresolvedSourcePackage], [TargetSelector])
 getSpecsAndTargetSelectors verbosity reducedVerbosity pkgDb targetSelectors localDistDirLayout localBaseCtx targetFilter =
   withInstallPlan reducedVerbosity localBaseCtx $ \elaboratedPlan _ -> do
+  traceIO $ ("DEBUG59: getSpecsAndTargetSelectors reached!")
   -- Split into known targets and hackage packages.
   (targets, hackageNames) <-
     partitionToKnownTargetsAndHackagePackages
@@ -548,6 +569,7 @@ constructProjectBuildContext
   -> IO ProjectBuildContext
 constructProjectBuildContext verbosity baseCtx targetSelectors = do
   runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+    --traceIO $ "DEBUG37.5: constructProjectBuildContext: elaboratedPlan is ‘" ++ (show $ (showInstallPlan $ elaboratedPlan )) ++ "’."  -- Again, hash seems here.
     -- Interpret the targets on the command line as build targets
     targets <- either (reportBuildTargetProblems verbosity) return $
       resolveTargets

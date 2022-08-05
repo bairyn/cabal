@@ -19,8 +19,10 @@
 --
 -----------------------------------------------------------------------------
 module Distribution.Client.InstallPlan (
-  InstallPlan,
-  GenericInstallPlan,
+  --InstallPlan,
+  --GenericInstallPlan,
+InstallPlan(..),
+GenericInstallPlan(..),
   PlanPackage,
   GenericPlanPackage(..),
   foldPlanPackage,
@@ -106,6 +108,7 @@ import Control.Exception
          ( assert )
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import Debug.Trace-----------------------------------------
 
 -- When cabal tries to install a number of packages, including all their
 -- dependencies it has a non-trivial problem to solve.
@@ -476,7 +479,8 @@ fromSolverInstallPlan f plan =
 
 
 fromSolverInstallPlanWithProgress ::
-      (IsUnit ipkg, IsUnit srcpkg)
+      --(IsUnit ipkg, IsUnit srcpkg)
+                             (IsUnit ipkg, IsUnit srcpkg, Show ipkg, Show srcpkg)   --- dumb
     => (   (SolverId -> [GenericPlanPackage ipkg srcpkg])
         -> SolverInstallPlan.SolverPlanPackage
         -> LogProgress [GenericPlanPackage ipkg srcpkg]         )
@@ -485,12 +489,14 @@ fromSolverInstallPlanWithProgress ::
 fromSolverInstallPlanWithProgress f plan = do
     (_, _, pkgs'') <- foldM f' (Map.empty, Map.empty, [])
                         (SolverInstallPlan.reverseTopologicalOrder plan)
+    --Debug.Trace.trace ("DEBUG46: frOmsolverInstallPlanwithProgress pkgs'': ‘" ++ (show pkgs'') ++ "’.") $ return ()  -- Yep, this has our hash.
     return $ mkInstallPlan "fromSolverInstallPlanWithProgress"
                (Graph.fromDistinctList pkgs'')
                (SolverInstallPlan.planIndepGoals plan)
   where
     f' (pidMap, ipiMap, pkgs) pkg = do
         pkgs' <- f (mapDep pidMap ipiMap) pkg
+        -- Debug.Trace.trace ("DEBUG47: f' pkgs' is: ‘" ++ (show pkgs') ++ "’.") $ return ()  -- Yep, also has our hash.
         let (pidMap', ipiMap')
                  = case nodeKey pkg of
                     PreExistingId _ uid -> (pidMap, Map.insert uid pkgs' ipiMap)
@@ -524,7 +530,8 @@ configureInstallPlan configFlags solverPlan =
                            -> SolverPackage UnresolvedPkgLoc
                            -> ConfiguredPackage UnresolvedPkgLoc
     configureSolverPackage mapDep spkg =
-      ConfiguredPackage {
+      --ConfiguredPackage {
+      let p = ConfiguredPackage {
         confPkgId = Configure.computeComponentId
                         (Cabal.fromFlagOrDefault False
                             (Cabal.configDeterministic configFlags))
@@ -540,6 +547,7 @@ configureInstallPlan configFlags solverPlan =
         confPkgDeps   = deps
         -- NB: no support for executable dependencies
       }
+      in Debug.Trace.trace ("DEBUG45: configureInstallPlan configureSolverPackage: ‘" ++ (show p) ++ "’.") $ p
       where
         deps = fmap (concatMap (map configuredId . mapDep)) (solverPkgLibDeps spkg)
 

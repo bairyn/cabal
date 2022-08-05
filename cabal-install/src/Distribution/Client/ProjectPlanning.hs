@@ -176,6 +176,12 @@ import           Data.List (groupBy, deleteBy)
 import qualified Data.List.NonEmpty as NE
 import           System.FilePath
 
+import Debug.Trace------------------
+import qualified Distribution.Client.InstallPlan
+import qualified Distribution.Compat.Graph
+import qualified Distribution.Client.SolverInstallPlan
+import qualified Distribution.Types.PackageName
+
 ------------------------------------------------------------------------------
 -- * Elaborated install plan
 ------------------------------------------------------------------------------
@@ -459,6 +465,7 @@ configureCompiler verbosity
 -- command needs the source package info to know about flag choices and
 -- dependencies of executables and setup scripts.
 --
+--rebuildInstallPlan :: Verbosity
 rebuildInstallPlan :: Verbosity
                    -> DistDirLayout -> CabalDirLayout
                    -> ProjectConfig
@@ -478,8 +485,11 @@ rebuildInstallPlan verbosity
                    CabalDirLayout {
                      cabalStoreDirLayout
                    } = \projectConfig localPackages ->
-    runRebuild distProjectRootDirectory $ do
+    --runRebuild distProjectRootDirectory $ do
+    (Debug.Trace.traceIO ("DEBUG61: projectConfig is ‘" ++ (show $ (projectConfig)) ++ "’.")  {- -- Prediction: should be only 1 DEBUG61, with correct projectConfig (static vs dyn) for the different runs. -} >>) . runRebuild distProjectRootDirectory $ do
     progsearchpath <- liftIO $ getSystemSearchPath
+    liftIO $ (Debug.Trace.traceIO ("DEBUG62: projectConfig is ‘" ++ (show $ (projectConfig)) ++ "’."))  -- Prediction: should be only 1 DEBUG61, with correct projectConfig (static vs dyn) for the different runs.
+    -- Reality: what I observed was what I predicted *except* it was output twice ... wait ...  OH, right, CMdInstall does the getTargetSpecs thing, which I'll have to look at later if it's relevant or I'm interested.  For now I'll just assume it's not relevant to the task at hand.
     let projectConfigMonitored = projectConfig { projectConfigBuildOnly = mempty }
 
     -- The overall improved plan is cached
@@ -512,6 +522,7 @@ rebuildInstallPlan verbosity
       -- The improved plan changes each time we install something, whereas
       -- the underlying elaborated plan only changes when input config
       -- changes, so it's worth caching them separately.
+      liftIO.traceIO $ "DEBUG37.25.5: rebuildInstallPlan: *original* elaboratedPlan is ‘" ++ (show $ (InstallPlan.showInstallPlan $ elaboratedPlan )) ++ "’."  -- Again, hash seems here.
       improvedPlan <- phaseImprovePlan elaboratedPlan elaboratedShared
 
       return (improvedPlan, elaboratedPlan, elaboratedShared, totalIndexState, activeRepos)
@@ -649,16 +660,19 @@ rebuildInstallPlan verbosity
             ]
 
     -- Elaborate the solver's install plan to get a fully detailed plan. This
-    -- version of the plan has the final nix-style hashed ids.
+    -- version of the plan has the final nix-style hashed ids.---------
     --
-    phaseElaboratePlan :: ProjectConfig
+    -- So, uh, is the hashing step done here?
+    --phaseElaboratePlan :: ProjectConfig
+    phaseElaboratePlan :: (Show loc) => ProjectConfig
                        -> (Compiler, Platform, ProgramDb)
                        -> PkgConfigDb
                        -> SolverInstallPlan
                        -> [PackageSpecifier (SourcePackage (PackageLocation loc))]
                        -> Rebuild ( ElaboratedInstallPlan
                                   , ElaboratedSharedConfig )
-    phaseElaboratePlan ProjectConfig {
+    --phaseElaboratePlan ProjectConfig {
+    phaseElaboratePlan debugg@ProjectConfig {
                          projectConfigShared,
                          projectConfigAllPackages,
                          projectConfigLocalPackages,
@@ -669,6 +683,8 @@ rebuildInstallPlan verbosity
                        solverPlan localPackages = do
 
         liftIO $ debug verbosity "Elaborating the install plan..."
+        liftIO $ Debug.Trace.traceIO ("DEBUG58: (rebuildInstallPlan) phaseElaboratePlan: projectConfig is: ‘" ++ (show debugg) ++ "’.")  -- This looks correct.  Also different as it should be.
+        -- EDIT: this also looks correct and different *both* times, since earlier I was only checking the first.
 
         sourcePackageHashes <-
           rerunIfChanged verbosity fileMonitorSourceHashes
@@ -1338,7 +1354,8 @@ planPackages verbosity comp platform solver SolverSettings{..}
 -- matching that of the classic @cabal install --user@ or @--global@
 --
 elaborateInstallPlan
-  :: Verbosity -> Platform -> Compiler -> ProgramDb -> PkgConfigDb
+--  :: Verbosity -> Platform -> Compiler -> ProgramDb -> PkgConfigDb
+  :: (Show loc) => Verbosity -> Platform -> Compiler -> ProgramDb -> PkgConfigDb
   -> DistDirLayout
   -> StoreDirLayout
   -> SolverInstallPlan
@@ -1360,7 +1377,16 @@ elaborateInstallPlan verbosity platform compiler compilerprogdb pkgConfigDB
                      allPackagesConfig
                      localPackagesConfig
                      perPackageConfig = do
+    --liftIO.traceIO $ "DEBUG42: elaborateInstallPlan: solverPlan (should NOT have hash) is ‘" ++ (InstallPlan.showInstallPlan $ solverPlan) ++ "’."
+    flip Debug.Trace.trace (return ()) $ "DEBUG42: elaborateInstallPlan: solverPlan (should NOT have hash) is ‘" ++ (SolverInstallPlan.showInstallPlan $ solverPlan) ++ "’."
     x <- elaboratedInstallPlan
+    flip Debug.Trace.trace (return ()) $ "DEBUG43: elaborateInstallPlan: elaboratedInstallPlan info is ‘" ++ (show $ (Distribution.Compat.Graph.toList . Distribution.Client.InstallPlan.planGraph $ x)) ++ "’."  -- NOTE: it looks like the nodes are PreInstalled mostly, not Configured or Installed...wait, my system packages might just be PreInstalled after all.  Let's try HsYAML dependency?
+    -- ^^^ So, um, the first DEBUG43 has the right config, but the second time
+    --  it is emitted, it looks like vanilla, shared, nostatic.  Dynamic is
+    --  right the first time around, but not the second.
+    -- Okay, so w/ HsYAML dependency, it's Configured.  Good.  However, if it's
+    -- just installedpackageinfo, how will we know to reject these due to
+    -- missing files?
     return (x, elaboratedSharedConfig)
   where
     elaboratedSharedConfig =
@@ -1386,8 +1412,9 @@ elaborateInstallPlan verbosity platform compiler compilerprogdb pkgConfigDB
     elaboratedInstallPlan ::
       LogProgress (InstallPlan.GenericInstallPlan IPI.InstalledPackageInfo ElaboratedConfiguredPackage)
     elaboratedInstallPlan =
+      --Debug.Trace.trace ("DEBUG49: elaboratedInstallPlan: plan is ‘" ++ (show $ (Distribution.Client.SolverInstallPlan.reverseTopologicalOrder $ solverPlan)) ++ "’.") $ flip InstallPlan.fromSolverInstallPlanWithProgress solverPlan $ \mapDep planpkg ->  -- Sure enough, solverPlan lacks the hash either 2 times it is printed.
       flip InstallPlan.fromSolverInstallPlanWithProgress solverPlan $ \mapDep planpkg ->
-        case planpkg of
+        case planpkg of  -- looks like at first the result has not our hash but later does.
           SolverInstallPlan.PreExisting pkg ->
             return [InstallPlan.PreExisting (instSolverPkgIPI pkg)]
 
@@ -1410,13 +1437,16 @@ elaborateInstallPlan verbosity platform compiler compilerprogdb pkgConfigDB
             let src_comps = componentsGraphToList g
             infoProgress $ hang (text "Component graph for" <+> pretty pkgid <<>> colon)
                             4 (dispComponentsWithDeps src_comps)
-            (_, comps) <- mapAccumM buildComponent
+            (_, comps) <- mapAccumM buildComponent  -- Woo, narrowed it down to buildComponent!  This must be where hashing occurs.
                             (Map.empty, Map.empty, Map.empty)
                             (map fst src_comps)
             let not_per_component_reasons = why_not_per_component src_comps
             if null not_per_component_reasons
                 then return comps
+                --then Debug.Trace.trace ("DEBUG51: elaborateSolverToComponents null-case, comps is ‘" ++ (show $ (comps)) ++ "’ (4th has hash).") $ return comps
+                --then Debug.Trace.trace ("DEBUG51.5: elaborateSolverToComponents null-case, src_comps is ‘" ++ (show $ (src_comps)) ++ "’ (has no hash).") $ return comps
                 else do checkPerPackageOk comps not_per_component_reasons
+                        flip Debug.Trace.trace (return ()) $ ("DEBUG50: (spkg, g, comps, maybeToList setupComponent) is ‘" ++ (show $ (spkg, g, comps, maybeToList setupComponent)) ++ "’.")
                         return [elaborateSolverToPackage spkg g $
                                 comps ++ maybeToList setupComponent]
            Left cns ->
@@ -1483,7 +1513,8 @@ elaborateInstallPlan verbosity platform compiler compilerprogdb pkgConfigDB
                         fsep (punctuate comma reasons)
             -- TODO: Maybe exclude Backpack too
 
-        elab0 = elaborateSolverToCommon spkg
+        --elab0 = elaborateSolverToCommon spkg
+        elab0 = Debug.Trace.trace ("DEBUG53: for elab0!, spkg is, um, ‘" ++ (show $ spkg) ++ "’.") $ elaborateSolverToCommon spkg
         pkgid = elabPkgSourceId    elab0
         pd    = elabPkgDescription elab0
 
@@ -1522,6 +1553,11 @@ elaborateInstallPlan verbosity platform compiler compilerprogdb pkgConfigDB
                         f ++ " not implemented yet"
 
 
+        -- Ah, this must be where hashing occurs.  Hopefully we're not too far
+        -- off from finding why static vs dyn hash makes the same hash where it
+        -- should be different.
+        --
+        -- I suspect add a first parameter to this, that has current config flags.
         buildComponent
             :: (ConfiguredComponentMap,
                 LinkedComponentMap,
@@ -1894,7 +1930,25 @@ elaborateInstallPlan verbosity platform compiler compilerprogdb pkgConfigDB
 
         elabPkgDescriptionOverride = descOverride
 
-        elabVanillaLib    = perPkgOptionFlag pkgid True packageConfigVanillaLib --TODO: [required feature]: also needs to be handled recursively
+        --elabVanillaLib    = perPkgOptionFlag pkgid True packageConfigVanillaLib --TODO: [required feature]: also needs to be handled recursively
+        elabVanillaLib    = (if not $ "cabal" `isInfixOf` (Distribution.Types.PackageName.unPackageName . pkgName $ pkgid) then id else Debug.Trace.trace ("DEBUG63: elabVanillaLib: ‘" ++ (show $ (Distribution.Types.PackageName.unPackageName . pkgName $ pkgid, perPkgOptionFlag pkgid True packageConfigVanillaLib, localPackagesConfig, localPackages, isLocalToProject pkgid)) ++ "’.")) $ perPkgOptionFlag pkgid True packageConfigVanillaLib --TODO: [required feature]: also needs to be handled recursively
+        -- Oohhhhhhhhhhhhhhh, great discovery!!  -- ^^^ So for the above, what
+        -- I see is it's expected for the first run, but for the second run, on
+        -- both static and dynamic it is not NOT local to project (final bool
+        -- is false), meaning it gets treated according to the global flags
+        -- only!
+        --
+        -- Maybe I found a bug!  Let's look back to how the second case is
+        -- (CMdInstall targets or whatever) and isLocalToProject.
+        --
+        -- Okay, heh?  So localPackages looks right and has the local package
+        -- on both runs on both configs (4x total, 2 for each of 2), but the
+        -- isLocalToProject is failing the second time around!
+        --
+        -- The issue is LocalUnpacked vs LocaLTarball (sdist).  First, former,
+        -- is seen as local, but the latter is seen as not local, meaning your
+        -- install flags are ignored.  Probably the latter shoudl be unpacked
+        -- priority first, not sdist.
         elabSharedLib     = pkgid `Set.member` pkgsUseSharedLibrary
         elabStaticLib     = perPkgOptionFlag pkgid False packageConfigStaticLib
         elabDynExe        = perPkgOptionFlag pkgid False packageConfigDynExe
@@ -2097,6 +2151,7 @@ elaborateInstallPlan verbosity platform compiler compilerprogdb pkgConfigDB
 
 -- TODO: Drop matchPlanPkg/matchElabPkg in favor of mkCCMapping
 
+-- TODO: I think this is it!
 shouldBeLocal :: PackageSpecifier (SourcePackage (PackageLocation loc)) -> Maybe PackageId
 shouldBeLocal NamedPackage{}              = Nothing
 shouldBeLocal (SpecificSourcePackage pkg) = case srcpkgSource pkg of

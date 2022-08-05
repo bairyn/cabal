@@ -156,6 +156,8 @@ data ElaboratedSharedConfig
 instance Binary ElaboratedSharedConfig
 instance Structured ElaboratedSharedConfig
 
+-- option of having more information for configured packages and
+-- installedpackageinfos.------------------------
 data ElaboratedConfiguredPackage
    = ElaboratedConfiguredPackage {
        -- | The 'UnitId' which uniquely identifies this item in a build plan

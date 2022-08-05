@@ -184,6 +184,8 @@ import           Control.Exception ( assert )
 import           System.Posix.Signals (sigKILL, sigSEGV)
 #endif
 
+import Debug.Trace------------------------------------------
+
 
 -- | Tracks what command is being executed, because we need to hide this somewhere
 -- for cases that need special handling (usually for error reporting).
@@ -315,6 +317,7 @@ withInstallPlan
       localPackages
     }
     action = do
+    Debug.Trace.traceIO $ ("DEBUG64: withInstallplan: localPackages is: ‘" ++ (show localPackages) ++ "’.")
     -- Take the project configuration and make a plan for how to build
     -- everything in the project. This is independent of any specific targets
     -- the user has asked for.
@@ -339,7 +342,9 @@ runProjectPreBuildPhase
       projectConfig,
       localPackages
     }
-    selectPlanSubset = do
+    --selectPlanSubset = do
+    selectPlanSubset = Debug.Trace.trace ("DEBUG57: runProjectPreBuildPhase: projectConfig is: ‘" ++ (show projectConfig) ++ "’.") $ do  -- Looks good; projectConfig differs.
+    Debug.Trace.traceIO $ ("DEBUG65: runProjectPreBuildPhasel: localPackages is: ‘" ++ (show localPackages) ++ "’.")
     -- Take the project configuration and make a plan for how to build
     -- everything in the project. This is independent of any specific targets
     -- the user has asked for.
