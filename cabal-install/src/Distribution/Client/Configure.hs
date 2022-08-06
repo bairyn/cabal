@@ -154,6 +154,9 @@ configure verbosity packageDBs repoCtxt comp platform progdb
         (fromFlagOrDefault
            (useDistPref defaultSetupScriptOptions)
            (configDistPref configFlags))
+        (fromFlagOrDefault
+            (setupConfigDynamic defaultSetupScriptOptions)
+            (configDynExe configFlags))
         (chooseCabalVersion
            configExFlags
            (flagToMaybe (configCabalVersion configExFlags)))
@@ -209,6 +212,7 @@ configureSetupScript packageDBs
     , useDependenciesExclusive = not defaultSetupDeps && isJust explicitSetupDeps
     , useVersionMacros         = not defaultSetupDeps && isJust explicitSetupDeps
     , isInteractive            = False
+    , setupConfigDynamic       = dynExe
     }
   where
     -- When we are compiling a legacy setup script without an explicit
