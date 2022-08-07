@@ -498,6 +498,8 @@ convertLegacyAllPackageFlags globalFlags configFlags configExFlags installFlags 
       configAllowNewer          = projectConfigAllowNewer,
       configWriteGhcEnvironmentFilesPolicy
                                 = projectConfigWriteGhcEnvironmentFilesPolicy
+      configAllowNewer          = projectConfigAllowNewer,
+      configInferUnspecified    = projectConfigInferUnspecified,
     } = configExFlags
 
     InstallFlags {
@@ -732,16 +734,17 @@ convertToLegacySharedConfig
     }
 
     configExFlags = ConfigExFlags {
-      configCabalVersion  = projectConfigCabalVersion,
-      configAppend        = mempty,
-      configBackup        = mempty,
-      configExConstraints = projectConfigConstraints,
-      configPreferences   = projectConfigPreferences,
-      configSolver        = projectConfigSolver,
-      configAllowOlder    = projectConfigAllowOlder,
-      configAllowNewer    = projectConfigAllowNewer,
+      configCabalVersion     = projectConfigCabalVersion,
+      configAppend           = mempty,
+      configBackup           = mempty,
+      configExConstraints    = projectConfigConstraints,
+      configPreferences      = projectConfigPreferences,
+      configSolver           = projectConfigSolver,
+      configAllowOlder       = projectConfigAllowOlder,
+      configAllowNewer       = projectConfigAllowNewer,
       configWriteGhcEnvironmentFilesPolicy
-                          = projectConfigWriteGhcEnvironmentFilesPolicy
+                             = projectConfigWriteGhcEnvironmentFilesPolicy
+      configInferUnspecified = projectConfigInferUnspecified,
     }
 
     installFlags = InstallFlags {
@@ -1096,6 +1099,8 @@ renderPackageLocationToken s | needsQuoting = show s
     ok n (_  :cs) = ok n cs
 
 
+-- TODO: inferUnspecified
+-- What is legalySharedConfigFieldDescrs?
 legacySharedConfigFieldDescrs :: ConstraintSource -> [FieldDescr LegacySharedConfig]
 legacySharedConfigFieldDescrs constraintSrc = concat
   [ liftFields

@@ -619,6 +619,10 @@ data ConfigExFlags = ConfigExFlags {
     configAllowOlder    :: Maybe AllowOlder,
     configWriteGhcEnvironmentFilesPolicy
       :: Flag WriteGhcEnvironmentFilesPolicy
+    --configInferUnspecified :: Maybe InferUnspecified,  -- TODO: infer unspecified artifacts flags of dependencies by scanning modules, until it's added to ghc-pkg.
+    configInferUnspecified :: Flag Bool,  -- TODO: infer unspecified artifacts flags of dependencies by scanning modules, until it's added to ghc-pkg. (TODO: add config cli option: --infer-unspecified-artifacts)
+    -- TODO flag: something like ‘if the ghc-pkg is too old to contain static and dynamic configuration options, infer these missign configs from the InstalledPackageInfo by scanning the installed filesystem to see whether dynamic and static files are available’.
+    -- The flags probably are actually ‘--enable-infer-unspecified-artifacts’ and ‘--disable-infer-unspecified-artifacts’.
   }
   deriving (Eq, Show, Generic)
 
