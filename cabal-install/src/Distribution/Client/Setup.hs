@@ -618,7 +618,8 @@ data ConfigExFlags = ConfigExFlags {
     configAllowNewer    :: Maybe AllowNewer,
     configAllowOlder    :: Maybe AllowOlder,
     configWriteGhcEnvironmentFilesPolicy
-      :: Flag WriteGhcEnvironmentFilesPolicy
+      :: Flag WriteGhcEnvironmentFilesPolicy,
+    configInferUnspecified :: Flag Bool
   }
   deriving (Eq, Show, Generic)
 
@@ -699,6 +700,15 @@ configureExOptions _showOrParseArgs src =
     (reqArg "always|never|ghc8.4.4+"
      writeGhcEnvironmentFilesPolicyParser
      writeGhcEnvironmentFilesPolicyPrinter)
+
+  -- Option for ‘if the ghc-pkg is too old to contain static and dynamic
+  -- configuration options, infer these missing configs from the
+  -- InstalledPackageInfo by scanning the installed filesystem to see whether
+  -- dynamic and static files are available’.
+  , option "" ["infer-unspecified"]
+      "inferring missing artifact ghc-pkg fields by scanning the filesystem"
+      configAppend (\v flags -> flags { configInferUnspecified = v })
+      (boolOpt [] [])
   ]
 
 

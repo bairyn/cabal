@@ -70,6 +70,7 @@ ipiFieldGrammar
        , c ExposedModules
        , c InstWith
        , c SpecLicenseLenient
+       , c KnownHasConfig
        )
     => g InstalledPackageInfo InstalledPackageInfo
 ipiFieldGrammar = mkInstalledPackageInfo
@@ -121,6 +122,11 @@ ipiFieldGrammar = mkInstalledPackageInfo
     <@> monoidalFieldAla    "haddock-interfaces"   (alaList' FSep FilePathNT)    L.haddockInterfaces
     <@> monoidalFieldAla    "haddock-html"         (alaList' FSep FilePathNT)    L.haddockHTMLs
     <@> optionalFieldAla    "pkgroot"              FilePathNT                    L.pkgRoot
+    <@> optionalFieldDefAla "pkgVanillaLib"        KnownHasConfig                L.pkgVanillaLib Nothing
+    <@> optionalFieldDefAla "pkgSharedLib"         KnownHasConfig                L.pkgSharedLib Nothing
+    <@> optionalFieldDefAla "pkgDynExe"            KnownHasConfig                L.pkgDynExe Nothing
+    <@> optionalFieldDefAla "pkgProfLib"           KnownHasConfig                L.pkgProfLib Nothing
+    <@> optionalFieldDefAla "pkgProfExe"           KnownHasConfig                L.pkgProfExe Nothing
   where
     mkInstalledPackageInfo _ Basic {..} = InstalledPackageInfo
         -- _basicPkgName is not used

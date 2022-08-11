@@ -193,6 +193,7 @@ data ProjectConfigShared
        projectConfigAllowNewer        :: Maybe AllowNewer,
        projectConfigWriteGhcEnvironmentFilesPolicy
                                       :: Flag WriteGhcEnvironmentFilesPolicy,
+       projectConfigInferUnspecified  :: Flag Bool,  -- TODO: infer unspecified artifacts flags of dependencies by scanning modules, until it's added to ghc-pkg.
        projectConfigMaxBackjumps      :: Flag Int,
        projectConfigReorderGoals      :: Flag ReorderGoals,
        projectConfigCountConflicts    :: Flag CountConflicts,

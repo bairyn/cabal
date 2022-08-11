@@ -35,6 +35,7 @@ module Distribution.FieldGrammar.Newtypes (
     Token' (..),
     MQuoted (..),
     FilePathNT (..),
+    KnownHasConfig (..),
     ) where
 
 import Distribution.Compat.Newtype
@@ -55,6 +56,7 @@ import qualified Data.List.NonEmpty              as NE
 import qualified Data.Set                        as Set
 import qualified Distribution.Compat.CharParsing as P
 import qualified Distribution.SPDX               as SPDX
+import qualified Text.PrettyPrint                as PP
 
 -- | Vertical list with commas. Displayed with 'vcat'
 data CommaVCat = CommaVCat
@@ -258,6 +260,31 @@ instance Parsec FilePathNT where
 
 instance Pretty FilePathNT where
     pretty = showFilePath . unpack
+
+-- | Whether this package is known to contain a given kind of build artifact.
+--
+-- Parsed as ‘Present’, ‘Missing’, and ‘Unspecified’.
+-- TODO: add a unit test for this before you MR it.
+newtype KnownHasConfig = KnownHasConfig {getKnownHasConfig :: Maybe Bool}
+
+instance Newtype (Maybe Bool) KnownHasConfig
+
+instance Parsec KnownHasConfig where
+    parsec = P.munch1 isAlpha >>= postprocess
+      where
+        postprocess str
+            |  str == "Present"     = pure . KnownHasConfig $ Just True
+            |  str == "Missing"     = pure . KnownHasConfig $ Just False
+            |  str == "Unspecified" = pure . KnownHasConfig $ Nothing
+            | otherwise             = fail $ "Not a KnownHasConfig: " ++ str
+
+instance Pretty KnownHasConfig where
+    pretty = PP.text . render
+      where
+        render :: KnownHasConfig -> String
+        render (KnownHasConfig (Just True))  = "Present"
+        render (KnownHasConfig (Just False)) = "Missing"
+        render (KnownHasConfig (Nothing))    = "Unspecified"
 
 -------------------------------------------------------------------------------
 -- SpecVersion
