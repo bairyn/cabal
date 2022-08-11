@@ -535,7 +535,8 @@ convertLegacyAllPackageFlags globalFlags configFlags configExFlags installFlags 
     --installShadowPkgs         = projectConfigShadowPkgs,
       installStrongFlags        = projectConfigStrongFlags,
       installAllowBootLibInstalls = projectConfigAllowBootLibInstalls,
-      installOnlyConstrained    = projectConfigOnlyConstrained
+      installOnlyConstrained    = projectConfigOnlyConstrained,
+      installRequireArtifacts   = projectConfigRequireArtifacts
     } = installFlags
 
     ProjectFlags
@@ -783,6 +784,7 @@ convertToLegacySharedConfig
       installStrongFlags       = projectConfigStrongFlags,
       installAllowBootLibInstalls = projectConfigAllowBootLibInstalls,
       installOnlyConstrained   = projectConfigOnlyConstrained,
+      installRequireArtifacts  = projectConfigRequireArtifacts,
       installOnly              = mempty,
       installOnlyDeps          = projectConfigOnlyDeps,
       installIndexState        = projectConfigIndexState,
@@ -1193,7 +1195,7 @@ legacySharedConfigFieldDescrs constraintSrc = concat
       , "max-backjumps", "reorder-goals", "count-conflicts"
       , "fine-grained-conflicts" , "minimize-conflict-set", "independent-goals", "prefer-oldest"
       , "strong-flags" , "allow-boot-library-installs"
-      , "reject-unconstrained-dependencies", "index-state"
+      , "reject-unconstrained-dependencies", "require-artifacts", "index-state"
       ]
   . commandOptionsToFields
   $ installOptions ParseArgs
