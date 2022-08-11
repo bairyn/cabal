@@ -375,6 +375,8 @@ planPackages verbosity comp platform solver
 
       . setOnlyConstrained onlyConstrained
 
+      . setRequireArtifacts requireArtifacts
+
       . setSolverVerbosity verbosity
 
       . setPreferenceDefault (if upgradeDeps then PreferAllLatest
@@ -438,6 +440,7 @@ planPackages verbosity comp platform solver
     maxBackjumps     = fromFlag (installMaxBackjumps      installFlags)
     allowBootLibInstalls = fromFlag (installAllowBootLibInstalls installFlags)
     onlyConstrained  = fromFlag (installOnlyConstrained   installFlags)
+    requireArtifacts = fromFlag (installRequireArtifacts  installFlags)
     upgradeDeps      = fromFlag (installUpgradeDeps       installFlags)
     onlyDeps         = fromFlag (installOnlyDeps          installFlags)
 
@@ -1059,6 +1062,7 @@ performInstallations verbosity
         platform
         progdb
         distPref
+        (fromFlagOrDefault (setupConfigDynamicDeps defaultSetupScriptOptions) $ configDynExe configFlags)
         (chooseCabalVersion configExFlags (libVersion miscOptions))
         (Just lock)
         parallelInstall
