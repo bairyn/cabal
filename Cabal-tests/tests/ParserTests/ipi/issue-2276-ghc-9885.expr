@@ -2185,6 +2185,6 @@ InstalledPackageInfo {
   pkgVanillaLib = True,
   pkgSharedLib = True,
   pkgDynExe = True,
-  pkgFullyStaticExe = True,
+  pkgFullyStaticExe = False,
   pkgProfLib = True,
   pkgProfExe = True}
