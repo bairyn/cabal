@@ -251,6 +251,7 @@ resolveSolverSettings ProjectConfig{
     solverSettingStrongFlags       = fromFlag projectConfigStrongFlags
     solverSettingAllowBootLibInstalls = fromFlag projectConfigAllowBootLibInstalls
     solverSettingOnlyConstrained   = fromFlag projectConfigOnlyConstrained
+    solverSettingRequireArtifacts  = fromFlag projectConfigRequireArtifacts
     solverSettingIndexState        = flagToMaybe projectConfigIndexState
     solverSettingActiveRepos       = flagToMaybe projectConfigActiveRepos
     solverSettingIndependentGoals  = fromFlag projectConfigIndependentGoals
@@ -275,6 +276,7 @@ resolveSolverSettings ProjectConfig{
        projectConfigStrongFlags       = Flag (StrongFlags False),
        projectConfigAllowBootLibInstalls = Flag (AllowBootLibInstalls False),
        projectConfigOnlyConstrained   = Flag OnlyConstrainedNone,
+       projectConfigRequireArtifacts  = Flag (RequireArtifacts True),
        projectConfigIndependentGoals  = Flag (IndependentGoals False),
        projectConfigPreferOldest      = Flag (PreferOldest False)
      --projectConfigShadowPkgs        = Flag False,
