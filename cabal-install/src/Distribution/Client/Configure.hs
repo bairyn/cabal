@@ -170,6 +170,7 @@ configureSetupScript :: PackageDBStack
                      -> Platform
                      -> ProgramDb
                      -> FilePath
+                     -> Bool
                      -> VersionRange
                      -> Maybe Lock
                      -> Bool
@@ -181,6 +182,7 @@ configureSetupScript packageDBs
                      platform
                      progdb
                      distPref
+                     dynExe
                      cabalVersion
                      lock
                      forceExternal
