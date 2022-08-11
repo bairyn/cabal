@@ -559,6 +559,7 @@ instance Arbitrary ProjectConfigShared where
         projectConfigStrongFlags          <- arbitrary
         projectConfigAllowBootLibInstalls <- arbitrary
         projectConfigOnlyConstrained      <- arbitrary
+        projectConfigRequireArtifacts     <- arbitrary
         projectConfigPerComponent         <- arbitrary
         projectConfigIndependentGoals     <- arbitrary
         projectConfigPreferOldest         <- arbitrary
@@ -602,6 +603,7 @@ instance Arbitrary ProjectConfigShared where
         <*> shrinker projectConfigStrongFlags
         <*> shrinker projectConfigAllowBootLibInstalls
         <*> shrinker projectConfigOnlyConstrained
+        <*> shrinker projectConfigRequireArtifacts
         <*> shrinker projectConfigPerComponent
         <*> shrinker projectConfigIndependentGoals
         <*> shrinker projectConfigPreferOldest
@@ -892,8 +894,8 @@ instance Arbitrary FineGrainedConflicts where
 instance Arbitrary MinimizeConflictSet where
     arbitrary = MinimizeConflictSet <$> arbitrary
 
-instance Arbitrary IndependentGoals where
-    arbitrary = IndependentGoals <$> arbitrary
+instance Arbitrary RequireArtifacts where
+    arbitrary = RequireArtifacts <$> arbitrary
 
 instance Arbitrary PreferOldest where
     arbitrary = PreferOldest <$> arbitrary
@@ -908,3 +910,6 @@ instance Arbitrary OnlyConstrained where
     arbitrary = oneof [ pure OnlyConstrainedAll
                       , pure OnlyConstrainedNone
                       ]
+
+instance Arbitrary IndependentGoals where
+    arbitrary = IndependentGoals <$> arbitrary

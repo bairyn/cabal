@@ -1091,6 +1091,10 @@ planPackages verbosity comp platform solver SolverSettings{..}
 
       . setOnlyConstrained solverSettingOnlyConstrained
 
+      . setRequireArtifacts solverSettingRequireArtifacts
+
+      . setSourceArtifacts solverSettingSourceArtifacts
+
       . setSolverVerbosity verbosity
 
         --TODO: [required eventually] decide if we need to prefer
