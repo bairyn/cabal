@@ -123,6 +123,7 @@ import           Distribution.Types.AnnotatedId
 import           Distribution.Types.ComponentName
 import           Distribution.Types.DumpBuildInfo
                    ( DumpBuildInfo (..) )
+import           Distribution.Types.InferUnspecified (InferUnspecified)
 import           Distribution.Types.LibraryName
 import           Distribution.Types.GivenComponent
   (GivenComponent(..))
@@ -585,8 +586,12 @@ rebuildInstallPlan verbosity
                         localPackages, localPackagesEnabledStanzas,
                         compiler, platform, programDbSignature progdb) $ do
 
+          let
+            flagInferUnspecified = projectConfigInferUnspecified projectConfigShared
+            inferUnspecified     = fromFlagOrDefault True $ flagInferUnspecified
           installedPkgIndex <- getInstalledPackages verbosity
-                                                    compiler progdb platform
+                                                    compiler inferUnspecified
+                                                    progdb platform
                                                     corePackageDbs
           (sourcePkgDb, tis, ar) <- getSourcePackages verbosity withRepoCtx
               (solverSettingIndexState solverSettings)

@@ -103,6 +103,7 @@ import qualified Distribution.Simple.Setup as Cabal
 import Distribution.Simple.Compiler
 import Distribution.Version
 import Distribution.System
+import Distribution.Types.InferUnspecified
 import Distribution.Types.PackageName.Magic
 import Distribution.Verbosity
 import Distribution.Pretty
@@ -324,20 +325,21 @@ getGhcInfo verbosity ghcProg = Internal.getGhcInfo verbosity implInfo ghcProg
     implInfo = ghcVersionImplInfo version
 
 -- | Given a single package DB, return all installed packages.
-getPackageDBContents :: Verbosity -> PackageDB -> ProgramDb
+getPackageDBContents :: Verbosity -> InferUnspecified -> PackageDB -> ProgramDb
                         -> IO InstalledPackageIndex
-getPackageDBContents verbosity packagedb progdb = do
-  pkgss <- getInstalledPackages' verbosity [packagedb] progdb
+getPackageDBContents verbosity inferUnspecified packagedb progdb = do
+  pkgss <- getInstalledPackages' verbosity inferUnspecified [packagedb] progdb
   toPackageIndex verbosity pkgss progdb
 
 -- | Given a package DB stack, return all installed packages.
-getInstalledPackages :: Verbosity -> Compiler -> PackageDBStack
+getInstalledPackages :: Verbosity -> Compiler -> InferUnspecified
+                     -> PackageDBStack
                      -> ProgramDb
                      -> IO InstalledPackageIndex
-getInstalledPackages verbosity comp packagedbs progdb = do
+getInstalledPackages verbosity comp inferUnspecified packagedbs progdb = do
   checkPackageDbEnvVar verbosity
   checkPackageDbStack verbosity comp packagedbs
-  pkgss <- getInstalledPackages' verbosity packagedbs progdb
+  pkgss <- getInstalledPackages' verbosity inferUnspecified packagedbs progdb
   index <- toPackageIndex verbosity pkgss progdb
   return $! hackRtsPackage index
 
@@ -451,9 +453,9 @@ removeMingwIncludeDir pkg =
 
 -- | Get the packages from specific PackageDBs, not cumulative.
 --
-getInstalledPackages' :: Verbosity -> [PackageDB] -> ProgramDb
+getInstalledPackages' :: Verbosity -> InferUnspecified -> [PackageDB] -> ProgramDb
                      -> IO [(PackageDB, [InstalledPackageInfo])]
-getInstalledPackages' verbosity packagedbs progdb =
+getInstalledPackages' verbosity inferUnspecified packagedbs progdb =
   sequenceA
     [ do pkgs <- HcPkg.dump (hcPkgInfo progdb) verbosity packagedb
          return (packagedb, pkgs)

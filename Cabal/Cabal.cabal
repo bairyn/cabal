@@ -144,6 +144,7 @@ library
     Distribution.Types.AnnotatedId
     Distribution.Types.ComponentInclude
     Distribution.Types.DumpBuildInfo
+    Distribution.Types.InferUnspecified
     Distribution.Types.PackageName.Magic
     Distribution.Types.ComponentLocalBuildInfo
     Distribution.Types.LocalBuildInfo

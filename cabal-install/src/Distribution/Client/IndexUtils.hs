@@ -75,6 +75,7 @@ import Distribution.Simple.Program
          ( ProgramDb )
 import qualified Distribution.Simple.Configure as Configure
          ( getInstalledPackages, getInstalledPackagesMonitorFiles )
+import Distribution.Types.InferUnspecified (InferUnspecified)
 import Distribution.Types.PackageName (PackageName)
 import Distribution.Version
          ( Version, VersionRange, mkVersion, intersectVersionRanges )
@@ -122,11 +123,11 @@ import qualified Hackage.Security.Client    as Sec
 import qualified Hackage.Security.Util.Some as Sec
 
 -- | Reduced-verbosity version of 'Configure.getInstalledPackages'
-getInstalledPackages :: Verbosity -> Compiler
+getInstalledPackages :: Verbosity -> Compiler -> InferUnspecified
                      -> PackageDBStack -> ProgramDb
                      -> IO InstalledPackageIndex
-getInstalledPackages verbosity comp packageDbs progdb =
-    Configure.getInstalledPackages verbosity' comp packageDbs progdb
+getInstalledPackages verbosity comp inferUnspecified packageDbs progdb =
+    Configure.getInstalledPackages verbosity' comp inferUnspecified packageDbs progdb
   where
     verbosity'  = lessVerbose verbosity
 

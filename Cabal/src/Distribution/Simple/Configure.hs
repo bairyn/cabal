@@ -76,6 +76,7 @@ import Distribution.Simple.Program
 import Distribution.Simple.Setup as Setup
 import Distribution.Simple.BuildTarget
 import Distribution.Simple.LocalBuildInfo
+import Distribution.Types.InferUnspecified
 import Distribution.Types.PackageVersionConstraint
 import Distribution.Types.LocalBuildInfo
 import Distribution.Types.ComponentRequestedSpec
@@ -1364,11 +1365,11 @@ reportFailedDependencies verbosity failed =
 -- Non-existent package databases do not cause errors, they just get skipped
 -- with a warning and treated as empty ones, since technically they do not
 -- contain any package.
-getInstalledPackages :: Verbosity -> Compiler
+getInstalledPackages :: Verbosity -> Compiler -> InferUnspecified
                      -> PackageDBStack -- ^ The stack of package databases.
                      -> ProgramDb
                      -> IO InstalledPackageIndex
-getInstalledPackages verbosity comp packageDBs progdb = do
+getInstalledPackages verbosity comp inferUnspecified packageDBs progdb = do
   when (null packageDBs) $
     die' verbosity $ "No package databases have been specified. If you use "
        ++ "--package-db=clear, you must follow it with --package-db= "
@@ -1378,7 +1379,7 @@ getInstalledPackages verbosity comp packageDBs progdb = do
   -- do not check empty packagedbs (ghc-pkg would error out)
   packageDBs' <- filterM packageDBExists packageDBs
   case compilerFlavor comp of
-    GHC   -> GHC.getInstalledPackages verbosity comp packageDBs' progdb
+    GHC   -> GHC.getInstalledPackages verbosity comp inferUnspecified packageDBs' progdb
     GHCJS -> GHCJS.getInstalledPackages verbosity packageDBs' progdb
     UHC   -> UHC.getInstalledPackages verbosity comp packageDBs' progdb
     HaskellSuite {} ->
@@ -1403,13 +1404,13 @@ getInstalledPackages verbosity comp packageDBs progdb = do
 -- That is because 'getInstalledPackages' performs some sanity checks
 -- on the package database stack in question.  However, when sandboxes
 -- are involved these sanity checks are not desirable.
-getPackageDBContents :: Verbosity -> Compiler
+getPackageDBContents :: Verbosity -> Compiler -> InferUnspecified
                      -> PackageDB -> ProgramDb
                      -> IO InstalledPackageIndex
-getPackageDBContents verbosity comp packageDB progdb = do
+getPackageDBContents verbosity comp inferUnspecified packageDB progdb = do
   info verbosity "Reading installed packages..."
   case compilerFlavor comp of
-    GHC -> GHC.getPackageDBContents verbosity packageDB progdb
+    GHC -> GHC.getPackageDBContents verbosity inferUnspecified packageDB progdb
     GHCJS -> GHCJS.getPackageDBContents verbosity packageDB progdb
     -- For other compilers, try to fall back on 'getInstalledPackages'.
     _   -> getInstalledPackages verbosity comp [packageDB] progdb
