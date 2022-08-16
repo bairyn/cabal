@@ -179,7 +179,7 @@ addChildren bs@(BS { rdeps = rdm, next = OneGoal (StanzaGoal qsn@(SN qpn _) t gr
 -- and furthermore we update the set of goals.
 --
 -- TODO: We could inline this above.
-addChildren bs@(BS { next = Instance qpn (PInfo fdeps _ fdefs _) }) =
+addChildren bs@(BS { next = Instance qpn (PInfo fdeps _ fdefs _ _) }) =  -- TODO: arts can be ignored here, right?
   addChildren ((scopedExtendOpen qpn fdeps fdefs bs)
          { next = Goals })
 
