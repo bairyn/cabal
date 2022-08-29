@@ -33,6 +33,7 @@ import qualified Distribution.Solver.Modular.PSQ as P
 import Distribution.Solver.Modular.Tree
 import qualified Distribution.Solver.Modular.WeightedPSQ as W
 
+import Distribution.Solver.Types.ArtifactSelection
 import Distribution.Solver.Types.ComponentDeps
 import Distribution.Solver.Types.PackagePath
 import Distribution.Solver.Types.Settings
@@ -61,8 +62,8 @@ type LinkingState = M.Map (PN, I) [PackagePath]
 --
 -- We also adjust the map of overall goals, and keep track of the
 -- reverse dependencies of each of the goals.
-extendOpen :: QPN -> [FlaggedDep QPN] -> BuildState -> BuildState
-extendOpen qpn' gs s@(BS { rdeps = gs', open = o' }) = go gs' o' gs
+extendOpen :: QPN -> [FlaggedDep QPN] -> ArtifactSelection -> BuildState -> BuildState
+extendOpen qpn' gs arts s@(BS { rdeps = gs', open = o' }) = go gs' o' gs
   where
     go :: RevDepMap -> [OpenGoal] -> [FlaggedDep QPN] -> BuildState
     go g o []                                             = s { rdeps = g, open = o }
@@ -84,7 +85,7 @@ extendOpen qpn' gs s@(BS { rdeps = gs', open = o' }) = go gs' o' gs
             ComponentSetup -> go (M.adjust (addIfAbsent (ComponentSetup, qpn')) qpn g) o ngs
             _              -> go                                                    g  o ngs
       | qpn `M.member` g  = go (M.adjust (addIfAbsent (c, qpn')) qpn g)   o  ngs
-      | otherwise         = go (M.insert qpn [(c, qpn')]  g) (PkgGoal qpn (DependencyGoal dr) : o) ngs
+      | otherwise         = go (M.insert qpn [(c, qpn')]  g) (PkgGoal qpn arts (DependencyGoal dr) : o) ngs
           -- code above is correct; insert/adjust have different arg order
     go g o ((Simple (LDep _dr (Ext _ext )) _)  : ngs) = go g o ngs
     go g o ((Simple (LDep _dr (Lang _lang))_)  : ngs) = go g o ngs
@@ -100,9 +101,9 @@ extendOpen qpn' gs s@(BS { rdeps = gs', open = o' }) = go gs' o' gs
 
 -- | Given the current scope, qualify all the package names in the given set of
 -- dependencies and then extend the set of open goals accordingly.
-scopedExtendOpen :: QPN -> FlaggedDeps PN -> FlagInfo ->
+scopedExtendOpen :: QPN -> FlaggedDeps PN -> FlagInfo -> ArtifactSelection ->
                     BuildState -> BuildState
-scopedExtendOpen qpn fdeps fdefs s = extendOpen qpn gs s
+scopedExtendOpen qpn fdeps fdefs arts s = extendOpen qpn gs arts s
   where
     -- Qualify all package names
     qfdeps = qualifyDeps (qualifyOptions s) qpn fdeps
@@ -120,6 +121,7 @@ data BuildType =
     Goals              -- ^ build a goal choice node
   | OneGoal OpenGoal   -- ^ build a node for this goal
   | Instance QPN PInfo -- ^ build a tree for a concrete instance
+  | TODOFail Blah
 
 build :: Linker BuildState -> Tree () QGoalReason
 build = ana go
@@ -143,15 +145,26 @@ addChildren bs@(BS { rdeps = rdm, open = gs, next = Goals })
 --
 -- For a package, we look up the instances available in the global info,
 -- and then handle each instance in turn.
-addChildren bs@(BS { rdeps = rdm, index = idx, next = OneGoal (PkgGoal qpn@(Q _ pn) gr) }) =
+addChildren bs@(BS { rdeps = rdm, index = idx, next = OneGoal (PkgGoal qpn@(Q _ pn) requiredArts gr) }) =
   case M.lookup pn idx of
     Nothing  -> FailF
                 (varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr)
                 UnknownPackage
     Just pis -> PChoiceF qpn rdm gr (W.fromList (L.map (\ (i, info) ->
-                                                       ([], POption i Nothing, bs { next = Instance qpn info }))
+                                                       --([], POption i Nothing, bs { next = Instance qpn info }))
+                                                       --([], POption i Nothing, bs { next = validateArts requiredArts (getArts info) $ Instance qpn info }))
+                                                       ([], POption i Nothing, infoBs qpn info))
                                                      (M.toList pis)))
       -- TODO: data structure conversion is rather ugly here
+  where
+    infoBs qpn info = bs { next = validateArts requiredArts (getArts info) $ Instance qpn info }
+    getArts (PInfo _ _ _ _ arts) = arts
+    validateArts requiredArts arts withSuccess = withSuccess
+        | arts `artsSubsetOf` requiredArts = withSuccess
+        | otherwise                        = FailF cs rs
+      where
+        cs = varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr  -- TODO: correct?  Can factor out parent duplicate?
+        rs = MissingArtifacts $ requiredArts `artsDifference` arts
 
 -- For a flag, we create only two subtrees, and we create them in the order
 -- that is indicated by the flag default.
@@ -179,8 +192,8 @@ addChildren bs@(BS { rdeps = rdm, next = OneGoal (StanzaGoal qsn@(SN qpn _) t gr
 -- and furthermore we update the set of goals.
 --
 -- TODO: We could inline this above.
-addChildren bs@(BS { next = Instance qpn (PInfo fdeps _ fdefs _ _) }) =  -- TODO: arts can be ignored here, right?
-  addChildren ((scopedExtendOpen qpn fdeps fdefs bs)
+addChildren bs@(BS { next = Instance qpn (PInfo fdeps _ fdefs _ arts) }) =
+  addChildren ((scopedExtendOpen qpn fdeps fdefs bs arts)
          { next = Goals })
 
 {-------------------------------------------------------------------------------
@@ -260,7 +273,7 @@ buildTree idx (IndependentGoals ind) igs =
       , linkingState = M.empty
       }
   where
-    topLevelGoal qpn = PkgGoal qpn UserGoal
+    topLevelGoal qpn = PkgGoal qpn noOuts UserGoal
 
     qpns | ind       = L.map makeIndependent igs
          | otherwise = L.map (Q (PackagePath DefaultNamespace QualToplevel)) igs
@@ -273,7 +286,7 @@ buildTree idx (IndependentGoals ind) igs =
 data OpenGoal =
     FlagGoal   (FN QPN) FInfo (FlaggedDeps QPN) (FlaggedDeps QPN) QGoalReason
   | StanzaGoal (SN QPN)       (FlaggedDeps QPN)                   QGoalReason
-  | PkgGoal    QPN                                                QGoalReason
+  | PkgGoal    QPN      ArtifactSelection                         QGoalReason  -- (Required artifacts.)
 
 -- | Closes a goal, i.e., removes all the extraneous information that we
 -- need only during the build phase.

@@ -139,8 +139,7 @@ solve sc cinfo idx pkgConfigDB userPrefs userConstraints userGoals =
     validationCata   = P.enforceSingleInstanceRestriction .
                        validateLinking idx .
                        validateTree cinfo idx pkgConfigDB
-    prunePhase       = P.onlyCompatibleArtifacts .
-                       (if asBool (avoidReinstalls sc) then P.avoidReinstalls (const True) else id) .
+    prunePhase       = (if asBool (avoidReinstalls sc) then P.avoidReinstalls (const True) else id) .
                        (if asBool (allowBootLibInstalls sc)
                         then id
                         else P.requireInstalled (`elem` nonInstallable)) .
