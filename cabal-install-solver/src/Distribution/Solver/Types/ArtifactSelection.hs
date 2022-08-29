@@ -9,10 +9,14 @@ module Distribution.Solver.Types.ArtifactSelection
     , dynOutsOnly
     , staticOutsOnly
     , noOuts
+    , unArtifactSelection
+    , artsSubsetOf
     ) where
 
 import Distribution.Solver.Compat.Prelude
 import Prelude ()
+
+import Data.Function (on)
 
 import qualified Data.Set as S
 
@@ -41,6 +45,19 @@ staticOutsOnly = ArtifactSelection $ S.fromList [StaticOuts]
 -- | ArtifactSelection alias: exclude all artifacts.
 noOuts :: ArtifactSelection
 noOuts = ArtifactSelection $ S.fromList []
+
+-- | Obtain the set of artifact kinds included in this artifact selection.
+unArtifactSelection :: ArtifactSelection -> S.Set ArtifactKind
+unArtifactSelection (ArtifactSelection set) = set
+
+-- | Is a selection a subset of another?
+artsSubsetOf :: ArtifactSelection -> ArtifactSelection -> Artifactselection
+artsSubsetOf = S.isSubsetOf `on` unArtifactSelection
+
+-- | Return artifacts in the first set not present in the second set.
+artsDifference :: ArtifactSelection -> ArtifactSelection
+artsDifference (ArtifactSelection a) (ArtifactSelection b) =
+  ArtifactSelection $ a `S.difference` b
 
 {-
 -- Aliases for 

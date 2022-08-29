@@ -28,6 +28,7 @@ import Control.Monad.Trans.Reader (Reader, runReader, ask, local)
 
 import Distribution.PackageDescription (lookupFlagAssignment, unFlagAssignment) -- from Cabal
 
+import Distribution.Solver.Types.ArtifactSelection
 import Distribution.Solver.Types.Flag
 import Distribution.Solver.Types.InstalledPreference
 import Distribution.Solver.Types.LabeledPackageConstraint
@@ -511,38 +512,3 @@ enforceSingleInstanceRestriction = (`runReader` M.empty) . go
         (Nothing, Just qpn') -> do
           -- Not linked, already used. This is an error
           return $ Fail (CS.union (varToConflictSet (P qpn)) (varToConflictSet (P qpn'))) MultipleInstances
-
--- TODO
-
--- | Require all valid dependencies to contain all require artifact types.
---
--- (Dynamic, static, etc.)
-onlyCompatibleArtifacts :: EndoTreeTrav d QGoalReason
-onlyCompatibleArtifacts = \x -> x  -- TODO
-{-
-onlyCompatibleArtifacts = TODO go
-    -- I think it's PChoiceF, but how do you look at dependency relationships
-    -- instead of just, um, the immediate level only?
-  where
-    go (PChoiceF v@(Q _ pn) _ gr _ ) | not (p pn) TODO
-      = FailF
-        (varToConflictSet (P v) `CS.union` goalReasonToConflictSetWithConflict v gr)
-        NotExplicit
-    go x
-      = x
--}
-
-
-
-{-
--- | Require all packages to be mentioned in a constraint or as a goal.
-onlyConstrained :: (PN -> Bool) -> EndoTreeTrav d QGoalReason
-onlyConstrained p = go
-  where
-    go (PChoiceF v@(Q _ pn) _ gr _) | not (p pn)
-      = FailF
-        (varToConflictSet (P v) `CS.union` goalReasonToConflictSetWithConflict v gr)
-        NotExplicit
-    go x
-      = x
--}
