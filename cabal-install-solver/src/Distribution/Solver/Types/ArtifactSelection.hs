@@ -20,9 +20,19 @@ import Data.Function (on)
 
 import qualified Data.Set as S
 
+import Distribution.Pretty ( Pretty(pretty) )
+
 -- | A type for specifying which artifacts are available to be required.
 newtype ArtifactSelection = ArtifactSelection (S.Set ArtifactKind)
   deriving (Eq, Show, Generic, Semigroup, Monoid)
+
+instance Pretty ArtifactSelection where
+  pretty (ArtifactSelection artSet)
+    | artSet == allArtifacts   = PP.text "all artifacts"
+    | artSet == dynOutsOnly    = PP.text "dynamic artifacts only"
+    | artSet == staticOutsOnly = PP.text "static artifacts only"
+    | artSet == noOuts         = PP.text "no output artifacts"
+    | otherwise                = PP.text "unknown artifacts"
 
 -- | Specific kinds of artifacts.
 data ArtifactKind
