@@ -160,7 +160,6 @@ addChildren bs@(BS { rdeps = rdm, index = idx, next = OneGoal (PkgGoal qpn@(Q _ 
         | otherwise                        = FailSeed cs rs
     cs = varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr
     rs = MissingArtifacts $ requiredArts `artsDifference` arts
-    TODO  -- TODO: next make sure teh error messages are fine.
 
 -- For a flag, we create only two subtrees, and we create them in the order
 -- that is indicated by the flag default.
