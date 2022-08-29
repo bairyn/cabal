@@ -118,10 +118,10 @@ scopedExtendOpen qpn fdeps fdefs arts s = extendOpen qpn gs arts s
 
 -- | Datatype that encodes what to build next
 data BuildType =
-    Goals              -- ^ build a goal choice node
-  | OneGoal OpenGoal   -- ^ build a node for this goal
-  | Instance QPN PInfo -- ^ build a tree for a concrete instance
-  | TODOFail Blah
+    Goals                            -- ^ build a goal choice node
+  | OneGoal OpenGoal                 -- ^ build a node for this goal
+  | Instance QPN PInfo               -- ^ build a tree for a concrete instance
+  | FailSeed ConflictSet FailReason  -- ^ an error occurred while we had access to the package info
 
 build :: Linker BuildState -> Tree () QGoalReason
 build = ana go
@@ -147,12 +147,8 @@ addChildren bs@(BS { rdeps = rdm, open = gs, next = Goals })
 -- and then handle each instance in turn.
 addChildren bs@(BS { rdeps = rdm, index = idx, next = OneGoal (PkgGoal qpn@(Q _ pn) requiredArts gr) }) =
   case M.lookup pn idx of
-    Nothing  -> FailF
-                (varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr)
-                UnknownPackage
+    Nothing  -> FailF cs UnknownPackage
     Just pis -> PChoiceF qpn rdm gr (W.fromList (L.map (\ (i, info) ->
-                                                       --([], POption i Nothing, bs { next = Instance qpn info }))
-                                                       --([], POption i Nothing, bs { next = validateArts requiredArts (getArts info) $ Instance qpn info }))
                                                        ([], POption i Nothing, infoBs qpn info))
                                                      (M.toList pis)))
       -- TODO: data structure conversion is rather ugly here
@@ -161,10 +157,10 @@ addChildren bs@(BS { rdeps = rdm, index = idx, next = OneGoal (PkgGoal qpn@(Q _ 
     getArts (PInfo _ _ _ _ arts) = arts
     validateArts requiredArts arts withSuccess = withSuccess
         | arts `artsSubsetOf` requiredArts = withSuccess
-        | otherwise                        = FailF cs rs
-      where
-        cs = varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr  -- TODO: correct?  Can factor out parent duplicate?
-        rs = MissingArtifacts $ requiredArts `artsDifference` arts
+        | otherwise                        = FailSeed cs rs
+    cs = varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr
+    rs = MissingArtifacts $ requiredArts `artsDifference` arts
+    TODO  -- TODO: next make sure teh error messages are fine.
 
 -- For a flag, we create only two subtrees, and we create them in the order
 -- that is indicated by the flag default.
@@ -286,7 +282,7 @@ buildTree idx (IndependentGoals ind) igs =
 data OpenGoal =
     FlagGoal   (FN QPN) FInfo (FlaggedDeps QPN) (FlaggedDeps QPN) QGoalReason
   | StanzaGoal (SN QPN)       (FlaggedDeps QPN)                   QGoalReason
-  | PkgGoal    QPN      ArtifactSelection                         QGoalReason  -- (Required artifacts.)
+  | PkgGoal    QPN      ArtifactSelection                         QGoalReason
 
 -- | Closes a goal, i.e., removes all the extraneous information that we
 -- need only during the build phase.
