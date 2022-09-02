@@ -68,12 +68,12 @@ extendOpen qpn' gs arts s@(BS { rdeps = gs', open = o' }) = go gs' o' gs
     go :: RevDepMap -> [OpenGoal] -> [FlaggedDep QPN] -> BuildState
     go g o []                                             = s { rdeps = g, open = o }
     go g o ((Flagged fn@(FN qpn _) fInfo t f)  : ngs) =
-        go g (FlagGoal fn fInfo t f (flagGR qpn) : o) ngs
+        go g (FlagGoal fn fInfo t f arts (flagGR qpn) : o) ngs
       -- Note: for 'Flagged' goals, we always insert, so later additions win.
       -- This is important, because in general, if a goal is inserted twice,
       -- the later addition will have better dependency information.
     go g o ((Stanza sn@(SN qpn _) t)           : ngs) =
-        go g (StanzaGoal sn t (flagGR qpn) : o) ngs
+        go g (StanzaGoal sn t arts (flagGR qpn) : o) ngs
     go g o ((Simple (LDep dr (Dep (PkgComponent qpn _) _)) c) : ngs)
       | qpn == qpn'       =
             -- We currently only add a self-dependency to the graph if it is
@@ -149,24 +149,24 @@ addChildren bs@(BS { rdeps = rdm, index = idx, next = OneGoal (PkgGoal qpn@(Q _ 
   case M.lookup pn idx of
     Nothing  -> FailF cs UnknownPackage
     Just pis -> PChoiceF qpn rdm gr (W.fromList (L.map (\ (i, info) ->
-                                                       ([], POption i Nothing, infoBs qpn info))
+                                                       ([], POption i Nothing, infoBs info))
                                                      (M.toList pis)))
       -- TODO: data structure conversion is rather ugly here
   where
-    infoBs qpn info = bs { next = validateArts requiredArts (getArts info) $ Instance qpn info }
+    infoBs info = bs { next = validateArts (getArts info) $ Instance qpn info }
     getArts (PInfo _ _ _ _ arts) = arts
-    validateArts requiredArts arts withSuccess = withSuccess
+    validateArts arts withSuccess
         | arts `artsSubsetOf` requiredArts = withSuccess
-        | otherwise                        = FailSeed cs rs
+        | otherwise                        = FailSeed cs (rs arts)
     cs = varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr
-    rs = MissingArtifacts $ requiredArts `artsDifference` arts
+    rs arts = MissingArtifacts $ requiredArts `artsDifference` arts
 
 -- For a flag, we create only two subtrees, and we create them in the order
 -- that is indicated by the flag default.
-addChildren bs@(BS { rdeps = rdm, next = OneGoal (FlagGoal qfn@(FN qpn _) (FInfo b m w) t f gr) }) =
+addChildren bs@(BS { rdeps = rdm, next = OneGoal (FlagGoal qfn@(FN qpn _) (FInfo b m w) t f arts gr) }) =
   FChoiceF qfn rdm gr weak m b (W.fromList
-    [([if b then 0 else 1], True,  (extendOpen qpn t bs) { next = Goals }),
-     ([if b then 1 else 0], False, (extendOpen qpn f bs) { next = Goals })])
+    [([if b then 0 else 1], True,  (extendOpen qpn t arts bs) { next = Goals }),
+     ([if b then 1 else 0], False, (extendOpen qpn f arts bs) { next = Goals })])
   where
     trivial = L.null t && L.null f
     weak = WeakOrTrivial $ unWeakOrTrivial w || trivial
@@ -176,10 +176,10 @@ addChildren bs@(BS { rdeps = rdm, next = OneGoal (FlagGoal qfn@(FN qpn _) (FInfo
 -- the stanza by replacing the False branch with failure) or preferences
 -- (try enabling the stanza if possible by moving the True branch first).
 
-addChildren bs@(BS { rdeps = rdm, next = OneGoal (StanzaGoal qsn@(SN qpn _) t gr) }) =
+addChildren bs@(BS { rdeps = rdm, next = OneGoal (StanzaGoal qsn@(SN qpn _) t arts gr) }) =
   SChoiceF qsn rdm gr trivial (W.fromList
     [([0], False,                                                                  bs  { next = Goals }),
-     ([1], True,  (extendOpen qpn t bs) { next = Goals })])
+     ([1], True,  (extendOpen qpn t arts bs) { next = Goals })])
   where
     trivial = WeakOrTrivial (L.null t)
 
@@ -188,8 +188,13 @@ addChildren bs@(BS { rdeps = rdm, next = OneGoal (StanzaGoal qsn@(SN qpn _) t gr
 --
 -- TODO: We could inline this above.
 addChildren bs@(BS { next = Instance qpn (PInfo fdeps _ fdefs _ arts) }) =
-  addChildren ((scopedExtendOpen qpn fdeps fdefs bs arts)
+  addChildren ((scopedExtendOpen qpn fdeps fdefs arts bs)
          { next = Goals })
+
+-- While building the tree, we detected a failure from information we had while
+-- we were aware of the package info.
+addChildren (BS { next = FailSeed cs fr }) =
+  FailF cs fr
 
 {-------------------------------------------------------------------------------
   Add linking
@@ -279,16 +284,16 @@ buildTree idx (IndependentGoals ind) igs =
 
 -- | Information needed about a dependency before it is converted into a Goal.
 data OpenGoal =
-    FlagGoal   (FN QPN) FInfo (FlaggedDeps QPN) (FlaggedDeps QPN) QGoalReason
-  | StanzaGoal (SN QPN)       (FlaggedDeps QPN)                   QGoalReason
-  | PkgGoal    QPN      ArtifactSelection                         QGoalReason
+    FlagGoal   (FN QPN) FInfo (FlaggedDeps QPN) (FlaggedDeps QPN) ArtifactSelection QGoalReason
+  | StanzaGoal (SN QPN)       (FlaggedDeps QPN)                   ArtifactSelection QGoalReason
+  | PkgGoal    QPN                                                ArtifactSelection QGoalReason
 
 -- | Closes a goal, i.e., removes all the extraneous information that we
 -- need only during the build phase.
 close :: OpenGoal -> Goal QPN
-close (FlagGoal   qfn _ _ _ gr) = Goal (F qfn) gr
-close (StanzaGoal qsn _     gr) = Goal (S qsn) gr
-close (PkgGoal    qpn       gr) = Goal (P qpn) gr
+close (FlagGoal   qfn _ _ _ _ gr) = Goal (F qfn) gr
+close (StanzaGoal qsn _ _     gr) = Goal (S qsn) gr
+close (PkgGoal    qpn _       gr) = Goal (P qpn) gr
 
 {-------------------------------------------------------------------------------
   Auxiliary

@@ -16,7 +16,6 @@ module Distribution.Solver.Modular.Preference
     , onlyConstrained
     , sortGoals
     , pruneAfterFirstSuccess
-    , onlyCompatibleArtifacts
     ) where
 
 import Prelude ()
@@ -28,7 +27,6 @@ import Control.Monad.Trans.Reader (Reader, runReader, ask, local)
 
 import Distribution.PackageDescription (lookupFlagAssignment, unFlagAssignment) -- from Cabal
 
-import Distribution.Solver.Types.ArtifactSelection
 import Distribution.Solver.Types.Flag
 import Distribution.Solver.Types.InstalledPreference
 import Distribution.Solver.Types.LabeledPackageConstraint
