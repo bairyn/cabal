@@ -156,7 +156,7 @@ addChildren bs@(BS { rdeps = rdm, index = idx, next = OneGoal (PkgGoal qpn@(Q _ 
     infoBs info = bs { next = validateArts (getArts info) $ Instance qpn info }
     getArts (PInfo _ _ _ _ arts) = arts
     validateArts arts withSuccess
-        | arts `artsSubsetOf` requiredArts = withSuccess
+        | requiredArts `artsSubsetOf` arts = withSuccess
         | otherwise                        = FailSeed cs (rs arts)
     cs = varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr
     rs arts = MissingArtifacts $ requiredArts `artsDifference` arts
