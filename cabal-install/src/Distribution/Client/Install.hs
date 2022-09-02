@@ -1059,7 +1059,7 @@ performInstallations verbosity
         platform
         progdb
         distPref
-        (error "TODO!!!  C.I.performInstallations setupScriptOptions: dynamic." TODO)
+        (fromFlagOrDefault (setupConfigDynamicDeps defaultSetupScriptOptions) $ configDynExe configFlags)
         (chooseCabalVersion configExFlags (libVersion miscOptions))
         (Just lock)
         parallelInstall
