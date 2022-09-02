@@ -71,7 +71,7 @@ import Distribution.Simple.BuildPaths
 import Distribution.Simple.Command
          ( CommandUI(..), commandShowOptions )
 import Distribution.Simple.Program.GHC
-         ( GhcMode(..), GhcOptions(..), renderGhcOptions )
+         ( GhcMode(..), GhcDynLinkMode(..), GhcOptions(..), renderGhcOptions )
 import qualified Distribution.Simple.PackageIndex as PackageIndex
 import Distribution.Simple.PackageIndex (InstalledPackageIndex)
 import qualified Distribution.InstalledPackageInfo as IPI
@@ -850,7 +850,6 @@ getExternalSetupMethod verbosity options pkg bt = do
             , ghcOptDynLinkMode     = case setupConfigDynamicDeps options'' of
                                       True  -> Flag GhcDynamicOnly
                                       False -> Flag GhcStaticOnly
-                                      _     -> mempty
             , ghcOptInputFiles      = toNubListR [setupHs]
             , ghcOptOutputFile      = Flag setupProgFile
             , ghcOptObjDir          = Flag setupDir
