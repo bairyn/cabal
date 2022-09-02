@@ -121,11 +121,11 @@ ipiFieldGrammar = mkInstalledPackageInfo
     <@> monoidalFieldAla    "haddock-interfaces"   (alaList' FSep FilePathNT)    L.haddockInterfaces
     <@> monoidalFieldAla    "haddock-html"         (alaList' FSep FilePathNT)    L.haddockHTMLs
     <@> optionalFieldAla    "pkgroot"              FilePathNT                    L.pkgRoot
-    <@> booleanFieldDef     "pkgVanillaLib"                                      L.pkgVanillaLib True
-    <@> booleanFieldDef     "pkgSharedLib"                                       L.pkgSharedLib True
-    <@> booleanFieldDef     "pkgDynExe"                                          L.pkgDynExe True
-    <@> booleanFieldDef     "pkgProfLib"                                         L.pkgProfLib True
-    <@> booleanFieldDef     "pkgProfExe"                                         L.pkgProfExe True
+    <@> booleanFieldDef     "pkg-vanilla-lib"                                    L.pkgVanillaLib True
+    <@> booleanFieldDef     "pkg-shared-lib"                                     L.pkgSharedLib True
+    <@> booleanFieldDef     "pkg-dyn-exe"                                        L.pkgDynExe True
+    <@> booleanFieldDef     "pkg-prof-lib"                                       L.pkgProfLib True
+    <@> booleanFieldDef     "pkg-prof-exe"                                       L.pkgProfExe True
   where
     mkInstalledPackageInfo _ Basic {..} = InstalledPackageInfo
         -- _basicPkgName is not used
