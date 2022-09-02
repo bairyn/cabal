@@ -3414,7 +3414,8 @@ setupHsScriptOptions (ReadyPackage elab@ElaboratedConfiguredPackage{..})
       useWin32CleanHack        = False,   --TODO: [required eventually]
       forceExternalSetupMethod = isParallelBuild,
       setupCacheLock           = Just cacheLock,
-      isInteractive            = False
+      isInteractive            = False,
+      setupConfigDynamicDeps   = elabDynExe
     }
 
 

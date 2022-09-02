@@ -157,6 +157,9 @@ configure verbosity packageDBs repoCtxt comp platform progdb
         (chooseCabalVersion
            configExFlags
            (flagToMaybe (configCabalVersion configExFlags)))
+        (fromFlagOrDefault
+            (setupConfigDynamicDeps defaultSetupScriptOptions)
+            (configDynExe configFlags))
         Nothing
         False
 
@@ -170,6 +173,7 @@ configureSetupScript :: PackageDBStack
                      -> VersionRange
                      -> Maybe Lock
                      -> Bool
+                     -> Bool
                      -> InstalledPackageIndex
                      -> Maybe ReadyPackage
                      -> SetupScriptOptions
@@ -181,6 +185,7 @@ configureSetupScript packageDBs
                      cabalVersion
                      lock
                      forceExternal
+                     dynExe
                      index
                      mpkg
   = SetupScriptOptions {
@@ -209,6 +214,7 @@ configureSetupScript packageDBs
     , useDependenciesExclusive = not defaultSetupDeps && isJust explicitSetupDeps
     , useVersionMacros         = not defaultSetupDeps && isJust explicitSetupDeps
     , isInteractive            = False
+    , setupDynamicDeps         = dynExe
     }
   where
     -- When we are compiling a legacy setup script without an explicit
