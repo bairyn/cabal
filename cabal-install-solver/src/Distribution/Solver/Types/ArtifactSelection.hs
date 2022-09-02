@@ -11,27 +11,27 @@ module Distribution.Solver.Types.ArtifactSelection
     , noOuts
     , unArtifactSelection
     , artsSubsetOf
+    , artsDifference
     ) where
 
 import Distribution.Solver.Compat.Prelude
 import Prelude ()
 
-import Data.Function (on)
-
 import qualified Data.Set as S
 
 import Distribution.Pretty ( Pretty(pretty) )
+import qualified Text.PrettyPrint as PP
 
 -- | A type for specifying which artifacts are available to be required.
 newtype ArtifactSelection = ArtifactSelection (S.Set ArtifactKind)
   deriving (Eq, Show, Generic, Semigroup, Monoid)
 
 instance Pretty ArtifactSelection where
-  pretty (ArtifactSelection artSet)
-    | artSet == allArtifacts   = PP.text "all artifacts"
-    | artSet == dynOutsOnly    = PP.text "dynamic artifacts only"
-    | artSet == staticOutsOnly = PP.text "static artifacts only"
-    | artSet == noOuts         = PP.text "no output artifacts"
+  pretty arts
+    | arts == allArtifacts   = PP.text "all artifacts"
+    | arts == dynOutsOnly    = PP.text "dynamic artifacts only"
+    | arts == staticOutsOnly = PP.text "static artifacts only"
+    | arts == noOuts         = PP.text "no output artifacts"
     | otherwise                = PP.text "unknown artifacts"
 
 -- | Specific kinds of artifacts.
@@ -61,11 +61,11 @@ unArtifactSelection :: ArtifactSelection -> S.Set ArtifactKind
 unArtifactSelection (ArtifactSelection set) = set
 
 -- | Is a selection a subset of another?
-artsSubsetOf :: ArtifactSelection -> ArtifactSelection -> Artifactselection
+artsSubsetOf :: ArtifactSelection -> ArtifactSelection -> Bool
 artsSubsetOf = S.isSubsetOf `on` unArtifactSelection
 
 -- | Return artifacts in the first set not present in the second set.
-artsDifference :: ArtifactSelection -> ArtifactSelection
+artsDifference :: ArtifactSelection -> ArtifactSelection -> ArtifactSelection
 artsDifference (ArtifactSelection a) (ArtifactSelection b) =
   ArtifactSelection $ a `S.difference` b
 
