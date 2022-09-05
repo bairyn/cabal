@@ -32,7 +32,7 @@ instance Pretty ArtifactSelection where
     | arts == dynOutsOnly    = PP.text "dynamic artifacts only"
     | arts == staticOutsOnly = PP.text "static artifacts only"
     | arts == noOuts         = PP.text "no output artifacts"
-    | otherwise                = PP.text "unknown artifacts"
+    | otherwise              = PP.text "unknown artifacts"
 
 -- | Specific kinds of artifacts.
 data ArtifactKind
@@ -68,40 +68,3 @@ artsSubsetOf = S.isSubsetOf `on` unArtifactSelection
 artsDifference :: ArtifactSelection -> ArtifactSelection -> ArtifactSelection
 artsDifference (ArtifactSelection a) (ArtifactSelection b) =
   ArtifactSelection $ a `S.difference` b
-
-{-
--- Aliases for 
-
-type AllArtifacts 
-
--- | A type for specifying which artifacts are available to be required.
-data ArtifactSelection
-    AllArtifacts    -- ^ e.g. dynamic and static interface files.
-  | DynOutsOnly     -- ^ Exclude static outputs.
-  | StaticOutsOnly  -- ^ Exclude dynamic artifacts.
-  | NoOuts          -- ^ Exclude all artifacts.
-  deriving (Eq, Show, Generic)
-
--- | Union of available arifacts.
-orArtifacts :: ArtifactSelection -> ArtifactSelection -> ArtifactSelection
-orArtifacts NoOuts             sel              = sel
-orArtifacts sel@StaticOutsOnly NoOuts           = sel
-orArtifacts sel@StaticOutsOnly StaticOutsOnly   = sel
-orArtifacts StaticOutsOnly     DynOutsOnly      = AllArtifacts
-orArtifacts StaticOutsOnly     sel@AllArtifacts = sel
-orArtifacts sel@DynOutsOnly    NoOuts           = sel
-orArtifacts DynOutsOnly        StaticOutsOnly   = AllArtifacts
-orArtifacts sel@DynOutsOnly    DynOutsOnly      = sel
-orArtifacts DynOutsOnly        sel@AllArtifacts = sel
-orArtifacts sel@AllArtifacts   _                = sel
-
--- | Complement of the selection.
-complArtifacts :: ArtifactSelections -> ArtifactSelections
-complArtifacts NoOuts         = AllArtifacts
-complArtifacts StaticOutsOnly = DynOutsOnly
-complArtifacts DynOutsOnly    = StaticOutsOnly
-complArtifacts AllArtifacts   = NoOuts
-
--- | Union of required artifacts.
-andArtifacts :: ArtifactSelection -> ArtifactSelection -> ArtifactSelection
--}

@@ -175,7 +175,6 @@ data DepResolverParams = DepResolverParams {
        -- | Function to override the solver's goal-ordering heuristics.
        depResolverGoalOrder         :: Maybe (Variable QPN -> Variable QPN -> Ordering),
        depResolverVerbosity         :: Verbosity
-       -- TODO: artifact params?
      }
 
 showDepResolverParams :: DepResolverParams -> String
