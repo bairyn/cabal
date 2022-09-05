@@ -98,7 +98,7 @@ validateLinking index = (`runReader` initVS) . go
     goP :: QPN -> POption -> Validate (Tree d c) -> Validate (Tree d c)
     goP qpn@(Q _pp pn) opt@(POption i _) r = do
       vs <- ask
-      let PInfo deps _ _ _ _ = vsIndex vs ! pn ! i  -- TODO _arts can be ignored here, right?
+      let PInfo deps _ _ _ _ = vsIndex vs ! pn ! i
           qdeps              = qualifyDeps (vsQualifyOptions vs) qpn deps
           newSaved           = M.insert qpn qdeps (vsSaved vs)
       case execUpdateState (pickPOption qpn opt qdeps) vs of
