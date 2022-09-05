@@ -1377,7 +1377,7 @@ getInstalledPackages verbosity comp packageDBs progdb = do
   info verbosity "Reading installed packages..."
   -- do not check empty packagedbs (ghc-pkg would error out)
   packageDBs' <- filterM packageDBExists packageDBs
-  case compilerFlavor comp of
+  todo$case compilerFlavor comp of
     GHC   -> GHC.getInstalledPackages verbosity comp packageDBs' progdb
     GHCJS -> GHCJS.getInstalledPackages verbosity packageDBs' progdb
     UHC   -> UHC.getInstalledPackages verbosity comp packageDBs' progdb
@@ -1396,6 +1396,27 @@ getInstalledPackages verbosity comp packageDBs progdb = do
     -- pkgdb is overridden with an empty one, so we just don't check for them.
     packageDBExists UserPackageDB            = pure True
     packageDBExists GlobalPackageDB          = pure True
+    todo :: IO InstalledPackageIndex -> IO InstalledPackageIndex
+    --todo = id
+    todo = (todo2 <$>)
+    -- change "scientific" to manually patch in the arts fields for debugging
+    -- with older GHC for now (TODO)
+    todo2 :: InstalledPackageIndex -> InstalledPackageIndex
+    todo2 idx = case PackageIndex.lookupUnitId idx unitId of
+      Nothing             -> id $ idx
+      Just origScientific -> patch origScientific $ idx
+      where
+        --unitId = "scientific"
+        unitId = "scientific-0.3.7.0-HliyECSDJ29Er5DEMaoElW"
+        patch :: InstalledPackageInfo -> InstalledPackageIndex -> InstalledPackageIndex
+        patch origScientific origIdx = PackageIndex.insert patchedScientific origIdx
+          where
+            patchedScientific :: InstalledPackageInfo
+            patchedScientific = origScientific {
+              IPI.pkgVanillaLib = False,
+              IPI.pkgSharedLib  = True,
+              IPI.pkgDynExe     = True
+            }
 
 -- | Like 'getInstalledPackages', but for a single package DB.
 --

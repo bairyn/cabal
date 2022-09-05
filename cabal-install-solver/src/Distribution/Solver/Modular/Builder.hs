@@ -37,6 +37,7 @@ import Distribution.Solver.Types.ArtifactSelection
 import Distribution.Solver.Types.ComponentDeps
 import Distribution.Solver.Types.PackagePath
 import Distribution.Solver.Types.Settings
+import Debug.Trace--------------------------
 
 -- | All state needed to build and link the search tree. It has a type variable
 -- because the linking phase doesn't need to know about the state used to build
@@ -156,8 +157,11 @@ addChildren bs@(BS { rdeps = rdm, index = idx, next = OneGoal (PkgGoal qpn@(Q _ 
     infoBs info = bs { next = validateArts (getArts info) $ Instance qpn info }
     getArts (PInfo _ _ _ _ arts) = arts
     validateArts arts withSuccess
-        | requiredArts `artsSubsetOf` arts = withSuccess
-        | otherwise                        = FailSeed cs (rs arts)
+        -- | requiredArts `artsSubsetOf` arts = withSuccess
+        -- | requiredArts `artsSubsetOf` arts = Debug.Trace.trace ("DEBUG2 (spammy): valid arts for pkg ‘" ++ (show qpn) ++ "’ with (requiredArts, arts) of ‘" ++ (show $ (requiredArts, arts)) ++ "’.") $ withSuccess
+        | requiredArts `artsSubsetOf` arts = Debug.Trace.trace ("DEBUG2 (spammy): valid arts for pkg ‘" ++ (show qpn) ++ "’ with (requiredArts, arts) of ‘" ++ (show $ (requiredArts, arts)) ++ "’.\n\tDEBUG3: ‘" ++ (show $ ((((\(k, v) -> (k, getArts v)) <$>) . M.toList) <$> (M.lookup pn idx))) ++ "’.") $ withSuccess
+        -- | otherwise                        = FailSeed cs (rs arts)
+        | otherwise                        = Debug.Trace.trace ("DEBUG1: invalid arts (yay)! for pkg ‘" ++ (show qpn) ++ "’ with (requiredArts, arts) of ‘" ++ (show $ (requiredArts, arts)) ++ "’.") $ FailSeed cs (rs arts)  -- (no hits)
     cs = varToConflictSet (P qpn) `CS.union` goalReasonToConflictSetWithConflict qpn gr
     rs arts = MissingArtifacts $ requiredArts `artsDifference` arts
 

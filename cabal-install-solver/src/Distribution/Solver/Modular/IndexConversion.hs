@@ -43,6 +43,7 @@ import Distribution.Solver.Modular.Index
 import Distribution.Solver.Modular.Package
 import Distribution.Solver.Modular.Tree
 import Distribution.Solver.Modular.Version
+import Debug.Trace----------------------------------------------
 
 -- | Convert both the installed package index and the source package
 -- index into one uniform solver index.
@@ -156,12 +157,17 @@ convIPId dr comp idx ipid =
 -- | Extract the ArtifactSelection representing which artifacts are available
 -- in this installed package.
 ipiToAS :: IPI.InstalledPackageInfo -> ArtifactSelection
-ipiToAS ipi = mconcat [statics, dynamics]
+--ipiToAS ipi = mconcat [statics, dynamics]
+ipiToAS ipi = todo $ mconcat [statics, dynamics]
   where
     statics :: ArtifactSelection
-    statics = if any ($ ipi) [IPI.pkgVanillaLib, IPI.pkgProfLib, IPI.pkgProfExe] then staticOutsOnly else mempty
+    --statics = if any ($ ipi) [IPI.pkgVanillaLib, IPI.pkgProfLib, IPI.pkgProfExe] then staticOutsOnly else mempty
+    statics = if any ($ ipi) [IPI.pkgVanillaLib] then staticOutsOnly else mempty
     dynamics :: ArtifactSelection
     dynamics = if any ($ ipi) [IPI.pkgSharedLib, IPI.pkgDynExe] then dynOutsOnly else mempty
+    todo
+      | not (any (\s -> s `L.isInfixOf` (show $ IPI.installedUnitId ipi)) ["scientific", "deepseq", "containers"]) = id
+      | otherwise = Debug.Trace.trace ("DEBUG4: ipiToAS for ‘" ++ (show $ IPI.installedUnitId ipi) ++ "’ has IPI of ‘" ++ (show $ ipi) ++ "’.")
 
 -- | Convert a cabal-install source package index to the simpler,
 -- more uniform index format of the solver.
