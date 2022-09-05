@@ -259,7 +259,6 @@ unqualifyDeps = go
 
 -- | A map containing reverse dependencies between qualified
 -- package names.
---type RevDepMap = Map QPN [(Component, QPN, TODO source vs installed)]
 type RevDepMap = Map QPN [(Component, QPN)]
 
 {-------------------------------------------------------------------------------
