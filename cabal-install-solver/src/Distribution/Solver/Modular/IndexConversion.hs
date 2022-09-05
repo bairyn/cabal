@@ -159,7 +159,7 @@ ipiToAS :: IPI.InstalledPackageInfo -> ArtifactSelection
 ipiToAS ipi = mconcat [statics, dynamics]
   where
     statics :: ArtifactSelection
-    statics = if any ($ ipi) [IPI.pkgVanillaLib, IPI.pkgProfLib, IPI.pkgProfExe] then staticOutsOnly else mempty
+    statics = if any ($ ipi) [IPI.pkgVanillaLib] then staticOutsOnly else mempty
     dynamics :: ArtifactSelection
     dynamics = if any ($ ipi) [IPI.pkgSharedLib, IPI.pkgDynExe] then dynOutsOnly else mempty
 
