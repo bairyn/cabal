@@ -54,13 +54,11 @@ import Distribution.Simple.Setup
 import Distribution.Simple.Utils
          ( ordNubBy )
 import Distribution.Verbosity
-import Debug.Trace---------------------------------------------------------------------------
 
 
 -- | Ties the two worlds together: classic cabal-install vs. the modular
 -- solver. Performs the necessary translations before and after.
---modularResolver :: SolverConfig -> DependencyResolver loc
-modularResolver :: Show loc => SolverConfig -> DependencyResolver loc
+modularResolver :: SolverConfig -> DependencyResolver loc
 modularResolver sc (Platform arch os) cinfo iidx sidx pkgConfigDB pprefs pcs pns =
   fmap (uncurry postprocess) $ -- convert install plan
   solve' sc cinfo idx pkgConfigDB pprefs gcs pns
@@ -75,13 +73,12 @@ modularResolver sc (Platform arch os) cinfo iidx sidx pkgConfigDB pprefs pcs pns
       -- Results have to be converted into an install plan. 'convCP' removes
       -- package qualifiers, which means that linked packages become duplicates
       -- and can be removed.
-      postprocess a rdm = todo.ordNubBy nodeKey $
+      postprocess a rdm = ordNubBy nodeKey $
                           map (convCP iidx sidx) (toCPs a rdm)
 
       -- Helper function to extract the PN from a constraint.
       pcName :: PackageConstraint -> PN
       pcName (PackageConstraint scope _) = scopeToPackageName scope
-      todo x = Debug.Trace.trace (show $ ("DEBUG0: D.C.Modular.modularResolver: result is ‘" ++ (show x) ++ "’.")) $ x  -- make sure it's configured where arts are missing, not PreExisting.
 
 -- | Run 'D.S.Modular.Solver.solve' and then produce a summarized log to display
 -- in the error case.
