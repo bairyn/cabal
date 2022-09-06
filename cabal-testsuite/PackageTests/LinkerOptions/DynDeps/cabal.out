@@ -1,0 +1,35 @@
+# cabal v2-configure
+# cabal v2-build
+Resolving dependencies...
+Build profile: -w ghc-<GHCVER> -O1
+In order, the following will be built:
+ - dynamic-1.0 (lib) (first run)
+Configuring library for dynamic-1.0..
+Preprocessing library for dynamic-1.0..
+Building library for dynamic-1.0..
+# cabal v2-install
+Wrote tarball sdist to <ROOT>/cabal.dist/work/./dynamic/dist/sdist/dynamic-1.0.tar.gz
+Resolving dependencies...
+Build profile: -w ghc-<GHCVER> -O1
+In order, the following will be built:
+ - dynamic-1.0 (lib) (requires build)
+Configuring library for dynamic-1.0..
+Preprocessing library for dynamic-1.0..
+Building library for dynamic-1.0..
+Installing library in <PATH>
+# cabal v2-sdist
+Wrote tarball sdist to <ROOT>/dynamic/dist-newstyle/sdist/dynamic-1.0.tar.gz
+# cabal v2-configure
+# cabal v2-build
+Resolving dependencies...
+Build profile: -w ghc-<GHCVER> -O1
+In order, the following will be built:
+ - dynamic-1.0 (lib) (requires build)
+ - depender-1.0 (exe:depender) (first run)
+Configuring library for dynamic-1.0..
+Preprocessing library for dynamic-1.0..
+Building library for dynamic-1.0..
+Installing library in <PATH>
+Configuring executable 'depender' for depender-1.0..
+Preprocessing executable 'depender' for depender-1.0..
+Building executable 'depender' for depender-1.0..
