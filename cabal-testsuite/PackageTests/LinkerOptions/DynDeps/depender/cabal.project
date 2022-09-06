@@ -1,0 +1,4 @@
+packages: ./*.cabal
+
+repository my-local-repository
+    url: file+noindex:///home/bairyn/git/cabal/cabal-testsuite/PackageTests/LinkerOptions/DynDeps/dynamic/dist-newstyle/sdist#shared-cache
