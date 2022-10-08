@@ -33,11 +33,13 @@ type Index = Map PN (Map I PInfo)
 -- globally, for reasons external to the solver. We currently use this
 -- for shadowing which essentially is a GHC limitation, and for
 -- installed packages that are broken.
+--
+-- Additionally, track build artifacts provided and build artifacts required.
 data PInfo = PInfo (FlaggedDeps PN)
                    (Map ExposedComponent ComponentInfo)
                    FlagInfo
                    (Maybe FailReason)
-                   ArtifactSelection  -- Which artifacts are available?  (sdists have all.)
+                   (ArtifactSelection, ArtifactSelection)
 
 -- | Info associated with each library and executable in a package instance.
 data ComponentInfo = ComponentInfo {
