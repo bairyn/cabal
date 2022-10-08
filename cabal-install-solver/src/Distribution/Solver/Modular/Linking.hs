@@ -349,7 +349,7 @@ verifyLinkGroup lg =
       -- if a constructor is added to the datatype we won't notice it here
       Just i -> do
         vs <- get
-        let PInfo _deps _exes finfo _ _ = vsIndex vs ! lgPackage lg ! i  -- TODO: arts can be ignored here, right?
+        let PInfo _deps _exes finfo _ _ = vsIndex vs ! lgPackage lg ! i
             flags   = M.keys finfo
             stanzas = [TestStanzas, BenchStanzas]
         forM_ flags $ \fn -> do
