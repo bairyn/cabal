@@ -536,6 +536,7 @@ convertLegacyAllPackageFlags globalFlags configFlags configExFlags installFlags 
       installStrongFlags        = projectConfigStrongFlags,
       installAllowBootLibInstalls = projectConfigAllowBootLibInstalls,
       installOnlyConstrained    = projectConfigOnlyConstrained
+      installRequireArtifacts   = projectConfigRequireArtifacts,
     } = installFlags
 
     ProjectFlags
@@ -749,16 +750,16 @@ convertToLegacySharedConfig
     }
 
     configExFlags = ConfigExFlags {
-      configCabalVersion     = projectConfigCabalVersion,
-      configAppend           = mempty,
-      configBackup           = mempty,
-      configExConstraints    = projectConfigConstraints,
-      configPreferences      = projectConfigPreferences,
-      configSolver           = projectConfigSolver,
-      configAllowOlder       = projectConfigAllowOlder,
-      configAllowNewer       = projectConfigAllowNewer,
+      configCabalVersion  = projectConfigCabalVersion,
+      configAppend        = mempty,
+      configBackup        = mempty,
+      configExConstraints = projectConfigConstraints,
+      configPreferences   = projectConfigPreferences,
+      configSolver        = projectConfigSolver,
+      configAllowOlder    = projectConfigAllowOlder,
+      configAllowNewer    = projectConfigAllowNewer,
       configWriteGhcEnvironmentFilesPolicy
-                             = projectConfigWriteGhcEnvironmentFilesPolicy
+                          = projectConfigWriteGhcEnvironmentFilesPolicy
     }
 
     installFlags = InstallFlags {
@@ -782,6 +783,7 @@ convertToLegacySharedConfig
       installStrongFlags       = projectConfigStrongFlags,
       installAllowBootLibInstalls = projectConfigAllowBootLibInstalls,
       installOnlyConstrained   = projectConfigOnlyConstrained,
+      installRequireArtifacts  = projectConfigRequireArtifacts,
       installOnly              = mempty,
       installOnlyDeps          = projectConfigOnlyDeps,
       installIndexState        = projectConfigIndexState,
@@ -1192,7 +1194,7 @@ legacySharedConfigFieldDescrs constraintSrc = concat
       , "max-backjumps", "reorder-goals", "count-conflicts"
       , "fine-grained-conflicts" , "minimize-conflict-set", "independent-goals", "prefer-oldest"
       , "strong-flags" , "allow-boot-library-installs"
-      , "reject-unconstrained-dependencies", "index-state"
+      , "reject-unconstrained-dependencies", "require-artifacts", "index-state"
       ]
   . commandOptionsToFields
   $ installOptions ParseArgs
