@@ -26,7 +26,7 @@ import qualified Distribution.Simple.PackageIndex as SI
 import Distribution.System
 
 import           Distribution.Solver.Types.ArtifactSelection
-                   ( ArtifactSelection(..), allArtifacts, staticOutsOnly, dynOutsOnly )
+                   ( ArtifactSelection(..), allArtifacts, staticOutsOnly, dynOutsOnly, noOuts )
 import           Distribution.Solver.Types.ComponentDeps
                    ( Component(..), componentNameToComponent )
 import           Distribution.Solver.Types.Flag
@@ -153,10 +153,11 @@ convIPId dr comp idx ipid =
                 -- NB: something we pick up from the
                 -- InstalledPackageIndex is NEVER an executable
 
--- | Extract the ArtifactSelection representing which artifacts are available
--- in this installed package.
-ipiToAS :: IPI.InstalledPackageInfo -> ArtifactSelection
-ipiToAS ipi = mconcat [statics, dynamics]
+-- | Extract the 'ArtifactSelection's representing which artifacts are
+-- available in this installed package and which artifacts this installed
+-- package requires.  Assume both are the same.
+ipiToAS :: IPI.InstalledPackageInfo -> (ArtifactSelection, ArtifactSelection)
+ipiToAS ipi = (\x -> (x, x)) $ mconcat [statics, dynamics]
   where
     statics :: ArtifactSelection
     statics = if any ($ ipi) [IPI.pkgVanillaLib] then staticOutsOnly else mempty
@@ -250,7 +251,7 @@ convGPD os arch cinfo constraints strfl solveExes pn
         isPrivate LibraryVisibilityPrivate = True
         isPrivate LibraryVisibilityPublic  = False
 
-  in PInfo flagged_deps components fds fr allArtifacts
+  in PInfo flagged_deps components fds fr (allArtifacts, noOuts)
 
 -- | Applies the given predicate (for example, testing buildability or
 -- visibility) to the given component and environment. Values are combined with
