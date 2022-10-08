@@ -24,7 +24,7 @@ import qualified Text.PrettyPrint as PP
 
 -- | A type for specifying which artifacts are available to be required.
 newtype ArtifactSelection = ArtifactSelection (S.Set ArtifactKind)
-  deriving (Eq, Show, Generic, Semigroup, Monoid)
+  deriving (Eq, Show, Ord, Generic, Semigroup, Monoid)
 
 instance Pretty ArtifactSelection where
   pretty arts
