@@ -58,6 +58,7 @@ module Distribution.Client.Dependency (
     setSolveExecutables,
     setGoalOrder,
     setSolverVerbosity,
+    setRequireArtifacts,
     removeLowerBounds,
     removeUpperBounds,
     addDefaultSetupDependencies,
@@ -174,7 +175,8 @@ data DepResolverParams = DepResolverParams {
 
        -- | Function to override the solver's goal-ordering heuristics.
        depResolverGoalOrder         :: Maybe (Variable QPN -> Variable QPN -> Ordering),
-       depResolverVerbosity         :: Verbosity
+       depResolverVerbosity         :: Verbosity,
+       depResolverRequireArtifacts  :: RequireArtifacts
      }
 
 showDepResolverParams :: DepResolverParams -> String
@@ -199,6 +201,7 @@ showDepResolverParams p =
   ++ "\nonly constrained packages: " ++ show (depResolverOnlyConstrained p)
   ++ "\nmax backjumps: "     ++ maybe "infinite" show
                                      (depResolverMaxBackjumps             p)
+  ++ "\nrequire artifacts: " ++ show (asBool (depResolverRequireArtifacts p))
   where
     showLabeledConstraint :: LabeledPackageConstraint -> String
     showLabeledConstraint (LabeledPackageConstraint pc src) =
@@ -259,7 +262,8 @@ basicDepResolverParams installedPkgIndex sourcePkgIndex =
        depResolverEnableBackjumping = EnableBackjumping True,
        depResolverSolveExecutables  = SolveExecutables True,
        depResolverGoalOrder         = Nothing,
-       depResolverVerbosity         = normal
+       depResolverVerbosity         = normal,
+       depResolverRequireArtifacts  = RequireArtifacts True
      }
 
 addTargets :: [PackageName]
@@ -382,6 +386,12 @@ setSolverVerbosity :: Verbosity -> DepResolverParams -> DepResolverParams
 setSolverVerbosity verbosity params =
     params {
       depResolverVerbosity = verbosity
+    }
+
+setRequireArtifacts :: RequireArtifacts -> DepResolverParams -> DepResolverParams
+setRequireArtifacts requireArtifacts params =
+    params {
+      depResolverRequireArtifacts = requireArtifacts
     }
 
 -- | Some packages are specific to a given compiler version and should never be
@@ -708,7 +718,7 @@ resolveDependencies platform comp pkgConfigDB solver params =
   $ runSolver solver (SolverConfig reordGoals cntConflicts fineGrained minimize
                       indGoals noReinstalls
                       shadowing strFlags allowBootLibs onlyConstrained_ maxBkjumps enableBj
-                      solveExes order verbosity (PruneAfterFirstSuccess False))
+                      solveExes order verbosity (PruneAfterFirstSuccess False) requireArtifacts)
                      platform comp installedPkgIndex sourcePkgIndex
                      pkgConfigDB preferences constraints targets
   where
@@ -732,7 +742,8 @@ resolveDependencies platform comp pkgConfigDB solver params =
       enableBj
       solveExes
       order
-      verbosity) =
+      verbosity
+      requireArtifacts) =
         if asBool (depResolverAllowBootLibInstalls params)
         then params
         else dontUpgradeNonUpgradeablePackages params
@@ -994,7 +1005,8 @@ resolveWithoutDependencies (DepResolverParams targets constraints
                               _reorderGoals _countConflicts _fineGrained
                               _minimizeConflictSet _indGoals _avoidReinstalls
                               _shadowing _strFlags _maxBjumps _enableBj _solveExes
-                              _allowBootLibInstalls _onlyConstrained _order _verbosity) =
+                              _allowBootLibInstalls _onlyConstrained _order _verbosity
+                              _requireArtifacts) =
     collectEithers $ map selectPackage (Set.toList targets)
   where
     selectPackage :: PackageName -> Either ResolveNoDepsError UnresolvedSourcePackage

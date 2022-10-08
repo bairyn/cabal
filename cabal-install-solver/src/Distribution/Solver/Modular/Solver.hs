@@ -73,7 +73,8 @@ data SolverConfig = SolverConfig {
   solveExecutables       :: SolveExecutables,
   goalOrder              :: Maybe (Variable QPN -> Variable QPN -> Ordering),
   solverVerbosity        :: Verbosity,
-  pruneAfterFirstSuccess :: PruneAfterFirstSuccess
+  pruneAfterFirstSuccess :: PruneAfterFirstSuccess,
+  requireArtifacts       :: RequireArtifacts
 }
 
 -- | Whether to remove all choices after the first successful choice at each
@@ -136,7 +137,9 @@ solve sc cinfo idx pkgConfigDB userPrefs userConstraints userGoals =
                        P.preferPackagePreferences userPrefs
     validationPhase  = P.enforcePackageConstraints userConstraints .
                        P.enforceManualFlags userConstraints
-    validationCata   = P.enforceSingleInstanceRestriction .
+    -- TODO: check flag settings outside the modular solver.
+    validationCata   = if asBool (requireArtifacts sc) then id else P.enforceArtifactRequirements idx .
+                       P.enforceSingleInstanceRestriction .
                        validateLinking idx .
                        validateTree cinfo idx pkgConfigDB
     prunePhase       = (if asBool (avoidReinstalls sc) then P.avoidReinstalls (const True) else id) .
