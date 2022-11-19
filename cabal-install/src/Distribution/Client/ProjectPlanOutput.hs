@@ -155,8 +155,7 @@ encodePlanAsJson distDirLayout elaboratedInstallPlan elaboratedSharedConfig =
             BuildInplaceOnly ->
                 ["dist-dir"   J..= J.String dist_dir] ++ [buildInfoFileLocation]
             BuildAndInstall ->
-                -- TODO: install dirs?
-                []
+                ["install-dirs" J..= install_dirs]
             ) ++
         case elabPkgOrComp elab of
           ElabPackage pkg ->
@@ -267,6 +266,29 @@ encodePlanAsJson distDirLayout elaboratedInstallPlan elaboratedSharedConfig =
         bin = if elabBuildStyle elab == BuildInplaceOnly
                then dist_dir </> "build" </> prettyShow s </> ("lib" ++ prettyShow s) <.> dllExtension plat
                else InstallDirs.bindir (elabInstallDirs elab) </> ("lib" ++ prettyShow s) <.> dllExtension plat
+
+      install_dirs :: J.Value
+      install_dirs =
+        J.object $
+          [ "prefix"        J..= J.String (InstallDirs.prefix        installDirs)
+          , "bindir"        J..= J.String (InstallDirs.bindir        installDirs)
+          , "libdir"        J..= J.String (InstallDirs.libdir        installDirs)
+          , "libsubdir"     J..= J.String (InstallDirs.libsubdir     installDirs)
+          , "dynlibdir"     J..= J.String (InstallDirs.dynlibdir     installDirs)
+          , "flibdir"       J..= J.String (InstallDirs.flibdir       installDirs)
+          , "libexecdir"    J..= J.String (InstallDirs.libexecdir    installDirs)
+          , "libexecsubdir" J..= J.String (InstallDirs.libexecsubdir installDirs)
+          , "includedir"    J..= J.String (InstallDirs.includedir    installDirs)
+          , "datadir"       J..= J.String (InstallDirs.datadir       installDirs)
+          , "datasubdir"    J..= J.String (InstallDirs.datasubdir    installDirs)
+          , "docdir"        J..= J.String (InstallDirs.docdir        installDirs)
+          , "mandir"        J..= J.String (InstallDirs.mandir        installDirs)
+          , "htmldir"       J..= J.String (InstallDirs.htmldir       installDirs)
+          , "haddockdir"    J..= J.String (InstallDirs.haddockdir    installDirs)
+          , "sysconfdir"    J..= J.String (InstallDirs.sysconfdir    installDirs)
+          ]
+       where
+        installDirs = elabInstallDirs elab
 
     comp2str :: ComponentDeps.Component -> String
     comp2str = prettyShow
