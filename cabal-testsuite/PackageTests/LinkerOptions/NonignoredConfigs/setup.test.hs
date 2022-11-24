@@ -23,115 +23,77 @@ import Test.Cabal.Prelude
 -- And ensure that whereas before they produced the same hash, now the package
 -- hashes produced are different.  (And also supplementarily ensure that
 -- re-running the same build with the same flags a second time produces a
--- deterministic hash too.)
-import Data.List (isInfixOf)
+-- deterministic hash too; the hash should differ only when we change these
+-- flags.)
+--
+-- Based on the UniqueIPID test.
+
+import Control.Monad (forM, foldM_)
+import Data.List (isPrefixOf, tails)
+
+data Linking = Static | Dynamic deriving (Eq, Ord, Show)
+
+links :: [Linking]
+links = [Static, Dynamic]
+
+linkConfigFlags :: Linking -> [String]
+linkConfigFlags Static  =
+    [
+    ]
+linkConfigFlags Dynamic =
+    [
+        "--enable-shared",
+        "--enable-executable-dynamic",
+        "--disable-library-vanilla"
+    ]
+
+lrun :: [Linking]
+lrun = [Static, Dynamic, Static, Dynamic]
+
 main = setupAndCabalTest $ do
     withPackageDb $ do
-        -- Get env file paths.  We'll check 4 files to extract hashes.
-        env <- getTestEnv
-        let
-            workDir = testWorkDir env
-            dyn1Path = workDir </> "dyn1.env"
-            dyn2Path = workDir </> "dyn2.env"
-            static1Path = workDir </> "static1.env"
-            static2Path = workDir </> "static2.env"
-
-        -- 4 phases.  We'll collect the results in ‘setup.dist/*.env’, and make
-        -- sure they look fine afterward.
-
-        -- Phase 1: dynamic, first sample.
-        dyn1Result <- do
+        -- Phase 1: get 4 hashes according to config flags.
+        results <- forM (zip [0..] lrun) $ \(idx, linking) -> do
             withDirectory "basic" $ do
-                cabal "v2-install" $
-                    [
-                        "--lib",
-                        "--package-env=" ++ dyn1Path
-                    ] ++
-                    [
-                        "--enable-shared",
-                        "--enable-executable-dynamic",
-                        "--disable-library-vanilla"
-                    ]
-
-        -- Phase 2: static, first sample.
-        static1Result <- do
-            withDirectory "basic" $ do
-                cabal "v2-install" $
-                    [
-                        "--lib",
-                        "--package-env=" ++ static1Path
-                    ] ++
-                    [
-                    ]
-
-        -- Phase 3: dynamic, second sample.
-        dyn2Result <- do
-            withDirectory "basic" $ do
-                cabal "v2-install" $
-                    [
-                        "--lib",
-                        "--package-env=" ++ dyn2Path
-                    ] ++
-                    [
-                        "--enable-shared",
-                        "--enable-executable-dynamic",
-                        "--disable-library-vanilla"
-                    ]
-
-        -- Phase 4: static, second sample.
-        static2Result <- do
-            withDirectory "basic" $ do
-                cabal "v2-install" $
-                    [
-                        "--lib",
-                        "--package-env=" ++ static2Path
-                    ] ++
-                    [
-                    ]
-
-        -- Now read the environment files.
-        let
-            extract path = do
-                contents <- liftIO $ readFile path
+                withSourceCopyDir ("basic" ++ show idx) $ do
+                    cwd <- fmap testSourceCopyDir getTestEnv
+                    -- (Now do ‘cd ..’, since withSourceCopyDir made our previous
+                    -- previous such withDirectories now accumulate to be
+                    -- relative to setup.dist/basic0, not testSourceDir
+                    -- (see 'testCurrentDir').)
+                    withDirectory ".." $ do
+                        -- Now go into the package directory and build.
+                        withDirectory "basic" $ do
+                            setup "configure" $ ["--disable-deterministic"] ++ linkConfigFlags linking
+                            setup "build"     $ []
+                            let exIPID s = takeWhile (/= '\n') . head . filter ("basic-0.1-" `isPrefixOf`) $ tails s
+                            hashedIpid <- recordMode DoNotRecord $ exIPID . resultOutput <$> setup' "register" ["--print-ipid", "--inplace"]
+                            return $ ((idx, linking), hashedIpid)
+        -- Phase 2: make sure we have different hashes iff we have different config flags.
+        -- In particular make sure the dynamic config flags weren't silently
+        -- dropped and ignored, since this is the bug that prompted this test.
+        (\step -> foldM_ step (const $ return ()) results) $ \acc x -> do
+            acc x
+            return $ \future -> do
                 let
-                    ls = lines contents
-                    prefix = "package-id basic-1.0-"
-                    basics = map (drop $ length prefix) . filter ("package-id basic-1.0-" `isInfixOf`) $ ls
-                line <- case basics of
-                    [extraction] -> return extraction
-                    _ -> do
-                        (>> return "ERROR") . assertFailure . unlines $
-                            [
-                                "Error: failed to find the ‘basic-1.0’ hash from ‘" ++ path ++ "’.",
-                                "\tMake sure the suffix includes a hash and not just the version.",
-                                "\tAlso make sure there is exactly 1 line starting with ‘" ++ (prefix) ++ "’ (found " ++ (show (length basics)) ++ ")."
-                            ]
-                return line
-        dyn1UID    <- extract dyn1Path
-        static1UID <- extract static1Path
-        dyn2UID    <- extract dyn2Path
-        static2UID <- extract static2Path
-
-        -- First make sure the two samples are deterministic.
-        -- (Non-essential test.)
-        when (dyn1UID /= dyn2UID) $ do
-            assertFailure . unlines $
-                [
-                    "Error: dyn1UID /= dyn2UID: ‘" ++ dyn1UID ++ "’ /= ‘" ++ dyn2UID ++ "’."
-                ]
-        when (static1UID /= static2UID) $ do
-            assertFailure . unlines $
-                [
-                    "Error: dyn1UID /= dyn2UID: ‘" ++ dyn1UID ++ "’ /= ‘" ++ dyn2UID ++ "’."
-                ]
-
-        -- Now make sure dyn and static are different.  What we're mainly testing.
-        when (dyn1UID == static1UID) $ do
-            assertFailure . unlines $
-                [
-                    "Error: dyn1UID == static1UID: ‘" ++ dyn1UID ++ "’ == ‘" ++ static1UID ++ "’.",
-                    "\tThese packages should have been configured with different config flags",
-                    "\tproducing different hashes."
-                ]
-
-        return ()
+                    ((thisIdx,   thisLinking),   thisHashedIpid)   = x
+                    ((futureIdx, futureLinking), futureHashedIpid) = future
+                when ((thisHashedIpid == futureHashedIpid) /= (thisLinking == futureLinking)) $ do
+                    assertFailure . unlines $
+                        if thisLinking /= futureLinking
+                            then
+                                -- What we are primarily concerned with testing
+                                -- here.
+                                [
+                                    "Error: static and dynamic config flags produced an IPID with the same hash; were the dynamic flags silently dropped?",
+                                    "\thashed IPID: " ++ thisHashedIpid
+                                ]
+                            else
+                                -- Help test our test can also make equal
+                                -- hashes.
+                                [
+                                    "Error: config flags were equal, yet a different IPID hash was produced.",
+                                    "\thashed IPID 1 : " ++ thisHashedIpid,
+                                    "\thashed IPID 2 : " ++ futureHashedIpid,
+                                    "\tlinking flags : " ++ show thisLinking
+                                ]
