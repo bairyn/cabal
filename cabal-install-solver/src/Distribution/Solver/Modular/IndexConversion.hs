@@ -57,11 +57,12 @@ import Distribution.Solver.Modular.Version
 -- explicitly requested.
 convPIs :: OS -> Arch -> CompilerInfo -> Map PN [LabeledPackageConstraint]
         -> ShadowPkgs -> StrongFlags -> SolveExecutables
+        -> Maybe (ArtifactSelection, ArtifactSelection)
         -> SI.InstalledPackageIndex -> CI.PackageIndex (SourcePackage loc)
         -> Index
-convPIs os arch comp constraints sip strfl solveExes iidx sidx =
+convPIs os arch comp constraints sip strfl solveExes srcArts iidx sidx =
   mkIndex $
-  convIPI' sip iidx ++ convSPI' os arch comp constraints strfl solveExes sidx
+  convIPI' sip iidx ++ convSPI' os arch comp constraints strfl solveExes srcArts sidx
 
 -- | Convert a Cabal installed package index to the simpler,
 -- more uniform index format of the solver.
@@ -167,18 +168,20 @@ ipiToAS ipi = (\x -> (x, x)) $ mconcat [statics, dynamics]
 -- | Convert a cabal-install source package index to the simpler,
 -- more uniform index format of the solver.
 convSPI' :: OS -> Arch -> CompilerInfo -> Map PN [LabeledPackageConstraint]
-         -> StrongFlags -> SolveExecutables
+         -> StrongFlags -> SolveExecutables -> Maybe (ArtifactSelection, ArtifactSelection)
          -> CI.PackageIndex (SourcePackage loc) -> [(PN, I, PInfo)]
-convSPI' os arch cinfo constraints strfl solveExes =
-    L.map (convSP os arch cinfo constraints strfl solveExes) . CI.allPackages
+convSPI' os arch cinfo constraints strfl solveExes srcArts =
+    L.map (convSP os arch cinfo constraints strfl solveExes srcArts) . CI.allPackages
 
 -- | Convert a single source package into the solver-specific format.
 convSP :: OS -> Arch -> CompilerInfo -> Map PN [LabeledPackageConstraint]
-       -> StrongFlags -> SolveExecutables -> SourcePackage loc -> (PN, I, PInfo)
-convSP os arch cinfo constraints strfl solveExes (SourcePackage (PackageIdentifier pn pv) gpd _ _pl) =
+       -> StrongFlags -> SolveExecutables -> Maybe (ArtifactSelection, ArtifactSelection)
+       -> SourcePackage loc
+       -> (PN, I, PInfo)
+convSP os arch cinfo constraints strfl solveExes srcArts (SourcePackage (PackageIdentifier pn pv) gpd _ _pl) =
   let i = I pv InRepo
       pkgConstraints = fromMaybe [] $ M.lookup pn constraints
-  in  (pn, i, convGPD os arch cinfo pkgConstraints strfl solveExes pn gpd)
+  in  (pn, i, convGPD os arch cinfo pkgConstraints strfl solveExes srcArts pn gpd)
 
 -- We do not use 'flattenPackageDescription' or 'finalizePD'
 -- from 'Distribution.PackageDescription.Configuration' here, because we
@@ -186,9 +189,11 @@ convSP os arch cinfo constraints strfl solveExes (SourcePackage (PackageIdentifi
 
 -- | Convert a generic package description to a solver-specific 'PInfo'.
 convGPD :: OS -> Arch -> CompilerInfo -> [LabeledPackageConstraint]
-        -> StrongFlags -> SolveExecutables -> PN -> GenericPackageDescription
+        -> StrongFlags -> SolveExecutables
+        -> Maybe (ArtifactSelection, ArtifactSelection)
+        -> PN -> GenericPackageDescription
         -> PInfo
-convGPD os arch cinfo constraints strfl solveExes pn
+convGPD os arch cinfo constraints strfl solveExes srcArts pn
         (GenericPackageDescription pkg scannedVersion flags mlib sub_libs flibs exes tests benchs) =
   let
     fds  = flagInfo strfl flags
@@ -251,7 +256,7 @@ convGPD os arch cinfo constraints strfl solveExes pn
         isPrivate LibraryVisibilityPrivate = True
         isPrivate LibraryVisibilityPublic  = False
 
-  in PInfo flagged_deps components fds fr (allArtifacts, noOuts)
+  in PInfo flagged_deps components fds fr (fromMaybe (allArtifacts, noOuts) srcArts)
 
 -- | Applies the given predicate (for example, testing buildability or
 -- visibility) to the given component and environment. Values are combined with

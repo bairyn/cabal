@@ -22,14 +22,11 @@ module Distribution.Solver.Modular.Preference
 import Prelude ()
 import Distribution.Solver.Compat.Prelude
 
-import Data.Functor.Identity (Identity, runIdentity)
 import qualified Data.List as L
 import Data.Map ((!))
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Except (Except, except, runExcept)
-import Control.Monad.Trans.Reader (Reader, runReader, mapReaderT, ask, local, asks)
+import Control.Monad.Trans.Reader (Reader, runReader, ask, local)
 
 import Distribution.PackageDescription (lookupFlagAssignment, unFlagAssignment) -- from Cabal
 
@@ -50,7 +47,6 @@ import Distribution.Solver.Modular.Index
 import Distribution.Solver.Modular.Package
 import qualified Distribution.Solver.Modular.PSQ as P
 import Distribution.Solver.Modular.Tree
-import Distribution.Solver.Modular.Var
 import Distribution.Solver.Modular.Version
 import qualified Distribution.Solver.Modular.ConflictSet as CS
 import qualified Distribution.Solver.Modular.WeightedPSQ as W
@@ -616,14 +612,13 @@ enforceArtifactRequirements idx = (`runReader` initialTracking) . go
           fr providedArts          = MissingArtifacts $ requiredArts `artsDifference` providedArts
           cps qpns                 = foldr CS.union CS.empty . map (CS.singleton . P) $ qpns
 
-          toAs             = ArtifactSelection . S.fromList
           choices          = M.fromList $
             [ (rdepAR providedArts, conflicting providedArts)
             | providedArts <- asSelections
             , not $ requiredArts `artsSubsetOf` providedArts
             ]
         in ARDeps mempty choices
-    depToAR _ qpn requiredArts (Simple (LDep dr _) comp) = mempty
+    depToAR _ _qpn _requiredArts (Simple (LDep _dr _) _comp) = mempty
 
     -- Find the powerlist.
     powerlist :: [a] -> [[a]]
@@ -642,7 +637,7 @@ enforceArtifactRequirements idx = (`runReader` initialTracking) . go
     -- not make.
     compl :: ARChoice -> [ARChoice]
     compl (ARFlag    qfn b)            = [ARFlag qfn b' | b' <- [True, False], b' /= b]
-    compl (ARStanza  qsn)              = []
+    compl (ARStanza  _qsn)             = []
     compl (ARPackage qpn providedArts) = [ARPackage qpn as | as <- asSelections, as /= providedArts]
 
     -- See if we can reduce the record of conditional failures once we make a
@@ -717,7 +712,7 @@ enforceArtifactRequirements idx = (`runReader` initialTracking) . go
 
     -- Try a flag choice.
     goF :: QFN -> Bool -> EnforceAR (Tree d c) -> EnforceAR (Tree d c)
-    goF qfn@(FN qpn@(Q _ _pn) _f) b r = do
+    goF qfn@(FN _qpn@(Q _ _pn) _f) b r = do
       let
         assign (A pa fa sa, arDeps) = (A pa (M.insert qfn b $ fa) sa, arDeps)
         reduce (assn,       arDeps) = (assn, reduceARDeps (ARFlag qfn b) $ arDeps)

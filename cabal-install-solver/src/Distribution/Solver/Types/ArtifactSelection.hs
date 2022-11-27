@@ -34,11 +34,17 @@ instance Pretty ArtifactSelection where
     | arts == noOuts         = PP.text "no output artifacts"
     | otherwise              = PP.text "unknown artifacts"
 
+instance Binary ArtifactSelection
+instance Structured ArtifactSelection
+
 -- | Specific kinds of artifacts.
 data ArtifactKind
   = DynOuts     -- ^ Exclude static outputs.
   | StaticOuts  -- ^ Exclude dynamic outputs.
   deriving (Eq, Show, Generic, Ord)
+
+instance Binary ArtifactKind
+instance Structured ArtifactKind
 
 -- | ArtifactSelection alias: e.g. dynamic and static interface files.
 allArtifacts :: ArtifactSelection

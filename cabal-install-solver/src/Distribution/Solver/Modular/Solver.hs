@@ -19,6 +19,7 @@ import Distribution.Verbosity
 
 import Distribution.Compiler (CompilerInfo)
 
+import Distribution.Solver.Types.ArtifactSelection
 import Distribution.Solver.Types.PackagePath
 import Distribution.Solver.Types.PackagePreferences
 import Distribution.Solver.Types.PkgConfigDb (PkgConfigDb)
@@ -74,7 +75,8 @@ data SolverConfig = SolverConfig {
   goalOrder              :: Maybe (Variable QPN -> Variable QPN -> Ordering),
   solverVerbosity        :: Verbosity,
   pruneAfterFirstSuccess :: PruneAfterFirstSuccess,
-  requireArtifacts       :: RequireArtifacts
+  requireArtifacts       :: RequireArtifacts,
+  sourceArtifacts        :: Maybe (ArtifactSelection, ArtifactSelection)
 }
 
 -- | Whether to remove all choices after the first successful choice at each

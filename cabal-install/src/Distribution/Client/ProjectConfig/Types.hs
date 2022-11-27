@@ -42,6 +42,7 @@ import Distribution.Client.IndexUtils.ActiveRepos
 import Distribution.Client.CmdInstall.ClientInstallFlags
          ( ClientInstallFlags(..) )
 
+import Distribution.Solver.Types.ArtifactSelection
 import Distribution.Solver.Types.Settings
 import Distribution.Solver.Types.ConstraintSource
 
@@ -414,6 +415,7 @@ data SolverSettings
        solverSettingAllowBootLibInstalls :: AllowBootLibInstalls,
        solverSettingOnlyConstrained   :: OnlyConstrained,
        solverSettingRequireArtifacts  :: RequireArtifacts,
+       solverSettingSourceArtifacts   :: Maybe (ArtifactSelection, ArtifactSelection),
        solverSettingIndexState        :: Maybe TotalIndexState,
        solverSettingActiveRepos       :: Maybe ActiveRepos,
        solverSettingIndependentGoals  :: IndependentGoals,
