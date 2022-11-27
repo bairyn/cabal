@@ -1,5 +1,136 @@
 import Test.Cabal.Prelude
 
+-- Build and install a package dynamically only, then build and install a
+-- package statically that depends on that dynamic package.  Old cabals are
+-- tempted to consider both the source package and the installed package
+-- (IPI) option with dynamic-only flags as valid, so they normally construct a
+-- build plan with this IPI option that results in a build error like the
+-- following:
+-- > [1 of 1] Compiling Main             ( Main.hs, ../setup.dist/work/depender/dist/build/depender/depender-tmp/Main.o )
+-- >
+-- > Main.hs:3:1: error:
+-- >     Could not find module `Dynamic'
+-- >     There are files missing in the `dynamic-1.0' package,
+-- >     try running 'ghc-pkg check'.
+-- >     Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+-- >   |
+-- >   | import qualified Dynamic (number)
+-- >   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--
+-- However, with ‘--require-artifacts’ rather than ‘--no-require-artifacts’,
+-- cabal will detect this error in advance and reject this particular IPI,
+-- leaving only building the source package as the only valid package option
+-- (I) we can choose as an assignment for the QPN (and any other valid IPIs if
+-- there were multiple pre-installed packages to choose from, including those
+-- with configure flags that work for us).
+
+-- (TODO: I don't think much is left after this test is cleaned up.  Just
+-- reviwe/edit the tracker commit messages, probably give it a final test, and
+-- then submit the PRs.)
+
+-- Run ‘ghc-pkg field base pkg-vanilla-lib’ to test whether the ghc-pkg
+-- we are using is new enough to support the 5 new IPI fields in the ‘.conf’
+-- files.  If ghc-pkg is too old, then its Cabal-syntax dependency
+-- (cabal-install also uses Cabal-syntax for the IPI fields) will emit an
+-- ‘Unknown field’ warning if cabal-install tries to update or register an IPI
+-- with new fields, but it should otherwise work besides having full
+-- functionality of the artifact checker.
+skipIfOldGhcPkg :: TestM ()
+skipIfOldGhcPkg = do
+    control <- resultExitCode <$> ghcPkg' "field base id" args
+    hasArts <- resultExitCode <$> ghcPkg' "field base pkg-vanilla-lib" args
+
+    -- cabal-install will still work without these 5 build artifact fields,
+    -- except the artifact checker wouldn't detect missing artifacts
+    -- without knowing what artifacts installed packages provide.
+    skipIf "ghc-pkg too old for 5 arts fields" $ hasArts /= control
+
+main = do
+    cabalTest $ do
+        withPackageDb $ do
+            -- If ghc-pkg is too old, cabal-install still works but has the
+            -- same bug which we fixed, and our test would fail.  Skip.
+            skipIfOldGhcPkg
+
+            -- Build a package with only dynamic build artifacts.
+            installDynamic
+
+            -- Build a package that requires static build artifacts.  Old
+            -- cabal-installs don't bother to check static and dynamic
+            -- configuration, so it'll probably produce a build plan that'll
+            -- fail as we described above.  With the build artifact checker,
+            -- our pre-installed IPI option we made earlier is detected to not
+            -- be a valid option in advance, so rather than producing a build
+            -- plan we know will fail, instead reject this particular option,
+            -- so that the moduler resolver cabal-install uses only picks the
+            -- only valid option left, which is to build from source.  (For our
+            -- test to work, we need the depender build to be aware of both the
+            -- pre-installed option and also the source package so that it can
+            -- rebuild from source with the correct flags, so that the
+            -- bug/enhancement scenario can be reproduced.)
+            installDepender
+
+            TODO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- OLD:
+
 -- This test shows how 2022-07-28 Archlinux Haskell with a standard ghc and
 -- cabal-install fails to build e.g. even attoparsec.  Essentially, the system
 -- packages strip away static libraries and files, and build with only dynamic
