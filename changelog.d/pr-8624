@@ -1,4 +1,4 @@
-synposis: Track static vs. dynamic dependencies
+synopsis: Track static vs. dynamic dependencies
 packages: Cabal-syntax Cabal cabal-install-solver cabal-install Cabal-tests
 prs: #8624
 description: {
