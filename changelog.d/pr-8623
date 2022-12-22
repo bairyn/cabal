@@ -1,4 +1,4 @@
-synposis: Fix project-local flags being ignored
+synopsis: Fix project-local flags being ignored
 packages: cabal-install
 prs: #8623
 description: {
