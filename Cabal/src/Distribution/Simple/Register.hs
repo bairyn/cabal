@@ -450,10 +450,8 @@ generalInstalledPackageInfo adjustRelIncDirs pkg abi_hash lib lbi clbi installDi
     IPI.pkgRoot            = Nothing,
     IPI.libVisibility      = libVisibility lib,
     IPI.pkgVanillaLib      = withVanillaLib lbi,
-    IPI.pkgSharedLib       = withProfLib lbi,
-    IPI.pkgDynExe          = withSharedLib lbi,
-    IPI.pkgProfLib         = withStaticLib lbi,
-    IPI.pkgProfExe         = withDynExe lbi
+    IPI.pkgSharedLib       = withSharedLib lbi,
+    IPI.pkgDynExe          = withDynExe lbi
   }
   where
     ghc84 = case compilerId $ compiler lbi of

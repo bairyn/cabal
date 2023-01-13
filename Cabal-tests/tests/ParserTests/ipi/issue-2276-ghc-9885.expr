@@ -2184,6 +2184,4 @@ InstalledPackageInfo {
   pkgRoot = Nothing,
   pkgVanillaLib = True,
   pkgSharedLib = True,
-  pkgDynExe = True,
-  pkgProfLib = True,
-  pkgProfExe = True}
+  pkgDynExe = True}
