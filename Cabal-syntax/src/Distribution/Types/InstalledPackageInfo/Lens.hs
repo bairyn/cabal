@@ -196,3 +196,15 @@ libVisibility :: Lens' InstalledPackageInfo LibraryVisibility
 libVisibility f s = fmap (\x -> s { T.libVisibility = x }) (f (T.libVisibility s))
 {-# INLINE libVisibility #-}
 
+pkgVanillaLib :: Lens' InstalledPackageInfo Bool
+pkgVanillaLib f s = fmap (\x -> s { T.pkgVanillaLib = x }) (f (T.pkgVanillaLib s))
+{-# INLINE pkgVanillaLib #-}
+
+pkgSharedLib :: Lens' InstalledPackageInfo Bool
+pkgSharedLib f s = fmap (\x -> s { T.pkgSharedLib = x }) (f (T.pkgSharedLib s))
+{-# INLINE pkgSharedLib #-}
+
+pkgDynExe :: Lens' InstalledPackageInfo Bool
+pkgDynExe f s = fmap (\x -> s { T.pkgDynExe = x }) (f (T.pkgDynExe s))
+{-# INLINE pkgDynExe #-}
+
