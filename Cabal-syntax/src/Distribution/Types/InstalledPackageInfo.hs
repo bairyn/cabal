@@ -96,7 +96,10 @@ data InstalledPackageInfo
         -- Artifacts included in this package:
         pkgVanillaLib     :: Bool,
         pkgSharedLib      :: Bool,
-        pkgDynExe         :: Bool
+        pkgDynExe         :: Bool,
+        pkgFullyStaticExe :: Bool,
+        pkgProfLib        :: Bool,
+        pkgProfExe        :: Bool
     }
     deriving (Eq, Generic, Typeable, Read, Show)
 
@@ -180,5 +183,8 @@ emptyInstalledPackageInfo
         libVisibility     = LibraryVisibilityPrivate,
         pkgVanillaLib     = True,
         pkgSharedLib      = True,
-        pkgDynExe         = True
+        pkgDynExe         = True,
+        pkgFullyStaticExe = True,
+        pkgProfLib        = True,
+        pkgProfExe        = True
     }

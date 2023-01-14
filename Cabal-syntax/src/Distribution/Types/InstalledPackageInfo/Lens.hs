@@ -208,3 +208,15 @@ pkgDynExe :: Lens' InstalledPackageInfo Bool
 pkgDynExe f s = fmap (\x -> s { T.pkgDynExe = x }) (f (T.pkgDynExe s))
 {-# INLINE pkgDynExe #-}
 
+pkgFullyStaticExe :: Lens' InstalledPackageInfo Bool
+pkgFullyStaticExe f s = fmap (\x -> s { T.pkgFullyStaticExe = x }) (f (T.pkgFullyStaticExe s))
+{-# INLINE pkgFullyStaticExe #-}
+
+pkgProfLib :: Lens' InstalledPackageInfo Bool
+pkgProfLib f s = fmap (\x -> s { T.pkgProfLib = x }) (f (T.pkgProfLib s))
+{-# INLINE pkgProfLib #-}
+
+pkgProfExe :: Lens' InstalledPackageInfo Bool
+pkgProfExe f s = fmap (\x -> s { T.pkgProfExe = x }) (f (T.pkgProfExe s))
+{-# INLINE pkgProfExe #-}
+

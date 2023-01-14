@@ -92,4 +92,7 @@ InstalledPackageInfo {
   pkgRoot = Nothing,
   pkgVanillaLib = True,
   pkgSharedLib = True,
-  pkgDynExe = True}
+  pkgDynExe = True,
+  pkgFullyStaticExe = True,
+  pkgProfLib = True,
+  pkgProfExe = True}

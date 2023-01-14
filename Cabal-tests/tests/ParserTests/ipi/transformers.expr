@@ -184,4 +184,7 @@ InstalledPackageInfo {
     "/opt/ghc/8.2.2/lib/ghc-8.2.2",
   pkgVanillaLib = True,
   pkgSharedLib = True,
-  pkgDynExe = True}
+  pkgDynExe = True,
+  pkgFullyStaticExe = True,
+  pkgProfLib = True,
+  pkgProfExe = True}
