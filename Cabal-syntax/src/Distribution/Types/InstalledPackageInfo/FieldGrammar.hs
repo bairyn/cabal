@@ -124,7 +124,7 @@ ipiFieldGrammar = mkInstalledPackageInfo
     <@> booleanFieldDef     "pkg-vanilla-lib"                                    L.pkgVanillaLib True
     <@> booleanFieldDef     "pkg-shared-lib"                                     L.pkgSharedLib True
     <@> booleanFieldDef     "pkg-dyn-exe"                                        L.pkgDynExe True
-    <@> booleanFieldDef     "pkg-fully-static-exe"                               L.pkgFullyStaticExe True
+    <@> booleanFieldDef     "pkg-fully-static-exe"                               L.pkgFullyStaticExe False
     <@> booleanFieldDef     "pkg-prof-lib"                                       L.pkgProfLib True
     <@> booleanFieldDef     "pkg-prof-exe"                                       L.pkgProfExe True
   where

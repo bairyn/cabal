@@ -454,7 +454,7 @@ planPackages verbosity comp platform solver
                                  (configAllowNewer configExFlags)
 
     sourceArts       = mconcat $
-      [ sourceArtsOf staticOutsOnly [(configVanillaLib, True)]
+      [ sourceArtsOf staticOutsOnly [(configVanillaLib, True), (configFullyStaticExe, False)]
       , sourceArtsOf dynOutsOnly    [(configSharedLib, False), (configDynExe, False)]
       ]
     sourceArtsOf arts fs = if any (\(fld, def) -> fromFlagOrDefault def . (fld $) $ configFlags) fs then arts else mempty
