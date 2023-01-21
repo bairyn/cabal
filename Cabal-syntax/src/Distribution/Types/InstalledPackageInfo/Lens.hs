@@ -196,27 +196,11 @@ libVisibility :: Lens' InstalledPackageInfo LibraryVisibility
 libVisibility f s = fmap (\x -> s { T.libVisibility = x }) (f (T.libVisibility s))
 {-# INLINE libVisibility #-}
 
-pkgVanillaLib :: Lens' InstalledPackageInfo Bool
-pkgVanillaLib f s = fmap (\x -> s { T.pkgVanillaLib = x }) (f (T.pkgVanillaLib s))
-{-# INLINE pkgVanillaLib #-}
+providesStaticArtifacts :: Lens' InstalledPackageInfo Bool
+providesStaticArtifacts f s = fmap (\x -> s { T.providesStaticArtifacts = x }) (f (T.providesStaticArtifacts s))
+{-# INLINE providesStaticArtifacts #-}
 
-pkgSharedLib :: Lens' InstalledPackageInfo Bool
-pkgSharedLib f s = fmap (\x -> s { T.pkgSharedLib = x }) (f (T.pkgSharedLib s))
-{-# INLINE pkgSharedLib #-}
-
-pkgDynExe :: Lens' InstalledPackageInfo Bool
-pkgDynExe f s = fmap (\x -> s { T.pkgDynExe = x }) (f (T.pkgDynExe s))
-{-# INLINE pkgDynExe #-}
-
-pkgFullyStaticExe :: Lens' InstalledPackageInfo Bool
-pkgFullyStaticExe f s = fmap (\x -> s { T.pkgFullyStaticExe = x }) (f (T.pkgFullyStaticExe s))
-{-# INLINE pkgFullyStaticExe #-}
-
-pkgProfLib :: Lens' InstalledPackageInfo Bool
-pkgProfLib f s = fmap (\x -> s { T.pkgProfLib = x }) (f (T.pkgProfLib s))
-{-# INLINE pkgProfLib #-}
-
-pkgProfExe :: Lens' InstalledPackageInfo Bool
-pkgProfExe f s = fmap (\x -> s { T.pkgProfExe = x }) (f (T.pkgProfExe s))
-{-# INLINE pkgProfExe #-}
+providesDynamicArtifacts :: Lens' InstalledPackageInfo Bool
+providesDynamicArtifacts f s = fmap (\x -> s { T.providesDynamicArtifacts = x }) (f (T.providesDynamicArtifacts s))
+{-# INLINE providesDynamicArtifacts #-}
 
