@@ -78,5 +78,5 @@ InstalledPackageInfo {
   pkgSharedLib = True,
   pkgDynExe = True,
   pkgFullyStaticExe = True,
-  pkgProfLib = True,
-  pkgProfExe = True}
+  providesStaticFiles = True,
+  providesDynamicFiles = True}
