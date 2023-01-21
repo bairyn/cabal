@@ -94,12 +94,8 @@ data InstalledPackageInfo
         haddockHTMLs      :: [FilePath],
         pkgRoot           :: Maybe FilePath,
         -- Artifacts included in this package:
-        pkgVanillaLib     :: Bool,
-        pkgSharedLib      :: Bool,
-        pkgDynExe         :: Bool,
-        pkgFullyStaticExe :: Bool,
-        pkgProfLib        :: Bool,
-        pkgProfExe        :: Bool
+        providesStaticArtifacts  :: Bool,
+        providesDynamicArtifacts :: Bool
     }
     deriving (Eq, Generic, Typeable, Read, Show)
 
@@ -181,10 +177,6 @@ emptyInstalledPackageInfo
         haddockHTMLs      = [],
         pkgRoot           = Nothing,
         libVisibility     = LibraryVisibilityPrivate,
-        pkgVanillaLib     = True,
-        pkgSharedLib      = True,
-        pkgDynExe         = True,
-        pkgFullyStaticExe = True,
-        pkgProfLib        = True,
-        pkgProfExe        = True
+        providesStaticArtifacts  = True,
+        providesDynamicArtifacts = True
     }

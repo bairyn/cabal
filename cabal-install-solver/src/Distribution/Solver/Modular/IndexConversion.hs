@@ -160,13 +160,8 @@ convIPId dr comp idx ipid =
 ipiToAS :: IPI.InstalledPackageInfo -> (ArtifactSelection, ArtifactSelection)
 ipiToAS ipi = (\x -> (x, x)) $ mconcat [statics, dynamics]
   where
-    none f t = all (not . f) t
-    libDefaults = none ($ ipi) [IPI.pkgVanillaLib, IPI.pkgSharedLib]
-    exeDefaults = none ($ ipi) [IPI.pkgDynExe, IPI.pkgFullyStaticExe]
-    statics, dynamics :: ArtifactSelection
-    statics = if (libDefaults && exeDefaults) || any ($ ipi) [IPI.pkgVanillaLib, IPI.pkgFullyStaticExe] then staticOutsOnly else mempty
-    dynamics = if any ($ ipi) [IPI.pkgSharedLib, pkgDynExe'] then dynOutsOnly else mempty
-      where pkgDynExe' | not $ IPI.pkgProfLib ipi = IPI.pkgDynExe | otherwise = const False
+    statics | IPI.providesStaticArtifacts ipi = staticOutsOnly | otherwise = mempty
+    dynamics | IPI.providesDynamicArtifacts ipi = dynOutsOnly | otherwise = mempty
 
 -- | Convert a cabal-install source package index to the simpler,
 -- more uniform index format of the solver.
