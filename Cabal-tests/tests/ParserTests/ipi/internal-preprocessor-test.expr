@@ -74,9 +74,5 @@ InstalledPackageInfo {
   pkgRoot =
   Just
     "/home/ogre/Documents/other-haskell/cabal/cabal-testsuite/PackageTests/CustomPreProcess/setup.dist/work/dist",
-  pkgVanillaLib = True,
-  pkgSharedLib = True,
-  pkgDynExe = True,
-  pkgFullyStaticExe = True,
   providesStaticFiles = True,
   providesDynamicFiles = True}
