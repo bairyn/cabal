@@ -182,5 +182,5 @@ InstalledPackageInfo {
     "/opt/ghc/8.2.2/share/doc/ghc-8.2.2/html/libraries/transformers-0.5.2.0"],
   pkgRoot = Just
     "/opt/ghc/8.2.2/lib/ghc-8.2.2",
-  providesStaticFiles = True,
-  providesDynamicFiles = True}
+  providesStaticArtifacts = True,
+  providesDynamicArtifacts = True}

@@ -2182,5 +2182,5 @@ InstalledPackageInfo {
   haddockHTMLs = [
     "/opt/ghc/8.2.2/share/doc/ghc-8.2.2/html/libraries/transformers-0.5.2.0"],
   pkgRoot = Nothing,
-  providesStaticFiles = True,
-  providesDynamicFiles = True}
+  providesStaticArtifacts = True,
+  providesDynamicArtifacts = True}
