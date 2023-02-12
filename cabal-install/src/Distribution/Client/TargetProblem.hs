@@ -21,6 +21,9 @@ data TargetProblem a
     | TargetComponentNotProjectLocal
       PackageId ComponentName SubComponentTarget
 
+    | TargetComponentNotAvailable  -- TODO
+      PackageId ComponentName SubComponentTarget
+
     | TargetComponentNotBuildable
       PackageId ComponentName SubComponentTarget
 

@@ -2553,6 +2553,7 @@ data AvailableTargetStatus k =
      | TargetNotBuildable     -- ^ When the component has @buildable: False@
      | TargetNotLocal         -- ^ When the component is non-core in a non-local package
      | TargetBuildable k TargetRequested -- ^ The target can or should be built
+     | TargetNotAvailable     -- ^ TODO
   deriving (Eq, Ord, Show, Functor)
 
 -- | This tells us whether a target ought to be built by default, or only if
@@ -2699,7 +2700,10 @@ availableSourceTargets elab =
               (Nothing,   True)  -> TargetBuildable (elabUnitId elab, cname)
                                                     TargetNotRequestedByDefault
               (Just True, False) ->
-                error $ "componentAvailableTargetStatus: impossible; cname=" ++ prettyShow cname
+                -- TODO: review & become more familiar with context to make
+                -- sure this makes sense.
+                --error $ "componentAvailableTargetStatus: impossible; cname=" ++ prettyShow cname
+                TargetNotAvailable
       where
         cname      = componentName component
         buildable  = PD.buildable (componentBuildInfo component)

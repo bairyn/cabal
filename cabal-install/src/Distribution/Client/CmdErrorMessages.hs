@@ -256,6 +256,9 @@ renderTargetProblem verb _ (TargetComponentNotBuildable pkgid cname _) =
  ++ "edit the .cabal file to declare it as buildable and fix any resulting "
  ++ "build problems."
 
+-- TODO
+renderTargetProblem _verb _ (TargetComponentNotAvailable _pkgid _cname _) = "TODO: DEBUG89: renderTargetProblem message for Not Available."
+
 renderTargetProblem verb _ (TargetOptionalStanzaDisabledByUser _ cname _) =
     "Cannot " ++ verb ++ " the " ++ showComponentName cname ++ " because "
  ++ "building " ++ compkinds ++ " has been explicitly disabled in the "
@@ -350,6 +353,7 @@ renderTargetProblemNoneEnabled verb targetSelector targets =
               | AvailableTarget {availableTargetComponentName} <- targets' ]
          ++ plural (listPlural targets') " is " " are all "
          ++ "marked as 'buildable: False'"
+        (TargetNotAvailable, _) -> "TODO NOT AVAILABLE DEBUG88"
         (TargetNotLocal, _) ->
             renderListCommaAnd
               [ "the " ++ showComponentName availableTargetComponentName
@@ -373,6 +377,7 @@ renderTargetProblemNoneEnabled verb targetSelector targets =
       , case availableTargetStatus t of
           TargetNotBuildable -> Nothing
           TargetNotLocal     -> Nothing
+          TargetNotAvailable -> Nothing  -- TODO
           _ -> optionalStanza (availableTargetComponentName t)
       )
 

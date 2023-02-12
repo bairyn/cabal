@@ -826,6 +826,9 @@ selectComponentTargetBasic subtarget
       TargetNotBuildable ->
         Left (TargetComponentNotBuildable pkgid cname subtarget)
 
+      TargetNotAvailable ->
+        Left (TargetComponentNotAvailable pkgid cname subtarget)  -- TODO
+
       TargetBuildable targetKey _ ->
         Right targetKey
 
