@@ -82,7 +82,8 @@ skipIfOldGhcPkg = do
     -- cabal-install will still work without these 5 build artifact fields,
     -- except the artifact checker wouldn't detect missing artifacts
     -- without knowing what artifacts installed packages provide.
-    skipIf "ghc-pkg too old for 5 arts fields" $ hasArts /= control
+    --skipIf "ghc-pkg too old for 5 arts fields" $ hasArts /= control
+    return ()
 
 -- ghcPkg' that can return non-zero.
 --
@@ -156,7 +157,7 @@ installDynamic sdistRepoDir = do
                     cabal "v2-configure" $ [] ++ commonArgs ++ dynamicArgs
                     cabal "v2-build" $ []
                     recordMode DoNotRecord $ do
-                        cabal "v2-install" $ ["--lib"] ++ commonArgs ++ dynamicArgs
+                        cabal "v2-install" $ ["--lib", "dynamic"] ++ commonArgs ++ dynamicArgs
                     tmpBuildDir <- (</> "dynamic-sdist-build") . testWorkDir <$> getTestEnv
                     cabal "v2-sdist" $ ["-o", sdistRepoDir, "--builddir", tmpBuildDir]
 
@@ -216,7 +217,7 @@ installDepender sdistRepoDir = do
 
                     -- Optional: check the output.
                     recordMode DoNotRecord $ do
-                        cabal "v2-install" $ [] ++ commonArgs ++ staticArgs
+                        cabal "v2-install" $ ["depender"] ++ commonArgs ++ staticArgs
                     withPlan $ do
                         runPlanExe' "depender" "depender" []
                             >>= assertOutputContains "Dynamic's number is 3."
